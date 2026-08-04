@@ -1,4 +1,4 @@
-
+﻿
 
 .notif-item.unread {
   background: var(--bg-hover);
@@ -610,8 +610,8 @@ html, body, *:not(.sb-nav) {
    ضبط المتغيّرين ليتناسق المربع بالكامل دون أي قيمة px متناثرة.
    ===================================================================== */
 .units-grid {
-  --u-card-w: 190px;
-  --u-scale: 0.91;
+  --u-card-w: 170px;
+  --u-scale: 0.84;
   grid-template-columns: repeat(auto-fill, minmax(var(--u-card-w), 1fr));
   gap: calc(0.9em * var(--u-scale) + 4px);
 }
@@ -626,29 +626,29 @@ html, body, *:not(.sb-nav) {
 
 .units-grid .unit-tile-sm {
   font-size: calc(11.5px * var(--u-scale));
-  min-height: calc(19em);
-  padding: 1.15em 1.15em 0.95em;
-  border-radius: 1.3em;
-  gap: 0.55em;
+  min-height: calc(17.6em);
+  padding: 0.95em 0.95em 0.8em;
+  border-radius: 1.15em;
+  gap: 0.45em;
 }
 
 /* ——— رأس المربع: رقم الوحدة والتصنيف ——— */
-.units-grid .unit-tile-sm .uc-top { display: flex; gap: 0.7em; align-items: center; margin-top: 1.5em; }
+.units-grid .unit-tile-sm .uc-top { display: flex; gap: 0.6em; align-items: center; margin-top: 1.35em; }
 /* المقاس بـ calc على --u-scale وليس بـ em: النسخة الفارغة تكبّر خطها لإظهار
    الأيقونة، ولو كان العرض بـ em لاختلف حجمها عن مربع الصورة الحقيقية. */
 .units-grid .unit-tile-sm .uc-thumb {
-  --uc-thumb-size: calc(48px * var(--u-scale));
+  --uc-thumb-size: calc(43px * var(--u-scale));
   width: var(--uc-thumb-size); height: var(--uc-thumb-size); flex: 0 0 var(--uc-thumb-size);
   border-radius: 0.9em; object-fit: cover;
   border: 1.5px solid rgba(231, 200, 115, 0.35); background: rgba(0, 0, 0, 0.15);
 }
 .units-grid .unit-tile-sm .uc-thumb-empty {
   display: grid; place-items: center; opacity: 0.7;
-  font-size: calc(21px * var(--u-scale));
+  font-size: calc(19px * var(--u-scale));
 }
 .units-grid .unit-tile-sm .uc-head { min-width: 0; flex: 1; }
 .units-grid .unit-tile-sm .uc-num {
-  font-family: 'Cairo', sans-serif; font-size: 1.6em; font-weight: 900; line-height: 1.15;
+  font-family: 'Cairo', sans-serif; font-size: 1.5em; font-weight: 900; line-height: 1.12;
   display: flex; align-items: center; gap: 0.35em; letter-spacing: 0.2px;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
 }
@@ -663,7 +663,7 @@ html, body, *:not(.sb-nav) {
 
 /* ——— صف الأسعار: تسمية فوق القيمة بدل سطر مزدحم ——— */
 .units-grid .unit-tile-sm .uc-prices {
-  margin-top: 0.7em; padding-top: 0.6em; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5em;
+  margin-top: 0.55em; padding-top: 0.5em; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5em;
   border-top: 1px dashed rgba(255, 255, 255, 0.22);
 }
 .units-grid .unit-tile-sm .uc-price-lbl { font-size: 0.82em; opacity: 0.8; font-weight: 700; display: block; }
@@ -675,7 +675,7 @@ html, body, *:not(.sb-nav) {
 
 /* ——— صندوق الحالة/النزيل: ارتفاع موحّد فتبقى كل المربعات متساوية ——— */
 .units-grid .unit-tile-sm .uc-info {
-  margin-top: 0.7em; height: 5.15em; padding: 0.5em 0.75em; border-radius: 0.9em;
+  margin-top: 0.55em; height: 4.7em; padding: 0.4em 0.65em; border-radius: 0.8em;
   display: flex; flex-direction: column; justify-content: center; gap: 0.15em;
   box-sizing: border-box; font-size: 0.95em; overflow: hidden;
 }
@@ -694,7 +694,7 @@ html, body, *:not(.sb-nav) {
 
 /* ——— شريط الإجراءات السفلي ——— */
 .units-grid .unit-tile-sm .uc-actions {
-  margin-top: 0.7em; padding-top: 0.5em; display: flex; align-items: center; gap: 0.5em;
+  margin-top: 0.55em; padding-top: 0.4em; display: flex; align-items: center; gap: 0.4em;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 .units-grid .unit-tile-sm .uc-btn {
@@ -761,6 +761,33 @@ html, body, *:not(.sb-nav) {
   padding: 5px 11px; border-radius: 8px; cursor: pointer; transition: background 0.18s ease;
 }
 .uc-sizer-reset:hover { background: #FDF8EC; }
+
+/* زر إخفاء الشريط */
+.uc-sizer-hide {
+  border: 1px solid rgba(201, 168, 76, 0.45); background: #fff; color: #8A7434;
+  width: 26px; height: 26px; border-radius: 8px; cursor: pointer;
+  display: grid; place-items: center; flex-shrink: 0;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.uc-sizer-hide:hover { background: #C9A84C; color: #fff; border-color: #A8862F; }
+
+/* الحالة المخفية: زر مصغّر يعيد إظهار الشريط */
+.uc-sizer-show {
+  display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px;
+  padding: 5px 11px; border-radius: 9px; cursor: pointer;
+  border: 1px dashed rgba(201, 168, 76, 0.55);
+  background: linear-gradient(135deg, #FFFDF7 0%, #FDF8EC 100%);
+  color: #6B5417; font-family: inherit; font-size: 11.5px; font-weight: 800;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.uc-sizer-show:hover {
+  border-color: #C9A84C; border-style: solid;
+  box-shadow: 0 2px 8px rgba(201, 168, 76, 0.22);
+}
+.uc-sizer-show-val {
+  background: rgba(201, 168, 76, 0.16); padding: 1px 6px; border-radius: 5px;
+  font-family: 'Cairo', sans-serif; font-size: 10.5px;
+}
 @media (max-width: 640px) {
   .uc-sizer-range { margin-inline-start: 0; width: 100%; }
   .uc-sizer-range input[type="range"] { flex: 1; width: auto; }

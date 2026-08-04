@@ -5,21 +5,21 @@ const LS_KEY = "almazen.units.grid";
 
 /** المقاسات الجاهزة — القيمة هي عرض عمود الشبكة بالبكسل. */
 export const UNIT_SIZE_PRESETS = [
-  { id: "xs", label: "مضغوط جداً", hint: "أكبر عدد وحدات في الشاشة", width: 168 },
-  { id: "sm", label: "مضغوط", hint: "الافتراضي — مربعات صغيرة وواضحة", width: 190 },
-  { id: "md", label: "متوسط", hint: "مساحة أوفر لكل وحدة", width: 224 },
-  { id: "lg", label: "كبير", hint: "تفاصيل أوضح للشاشات الكبيرة", width: 268 },
-  { id: "xl", label: "كبير جداً", hint: "أقصى وضوح للعرض والتقديم", width: 310 },
+  { id: "xs", label: "مضغوط جداً", hint: "أكبر عدد وحدات في الشاشة", width: 148 },
+  { id: "sm", label: "مضغوط", hint: "الافتراضي — مربعات صغيرة وواضحة", width: 170 },
+  { id: "md", label: "متوسط", hint: "مساحة أوفر لكل وحدة", width: 200 },
+  { id: "lg", label: "كبير", hint: "تفاصيل أوضح للشاشات الكبيرة", width: 240 },
+  { id: "xl", label: "كبير جداً", hint: "أقصى وضوح للعرض والتقديم", width: 290 },
 ];
 
 /** العرض المرجعي الذي يساوي مقياساً = 1 (حجم الخط الأساسي في CSS). */
 const REFERENCE_WIDTH = 216;
 
-export const DEFAULT_UNIT_GRID = { preset: "sm", width: 190, scale: 0.91 };
+export const DEFAULT_UNIT_GRID = { preset: "sm", width: 170, scale: 0.84 };
 
 /** حدود التصغير/التكبير اليدوي — تمنع المقاسات التي تكسر تنسيق المربع. */
-export const UNIT_WIDTH_MIN = 165;
-export const UNIT_WIDTH_MAX = 340;
+export const UNIT_WIDTH_MIN = 142;
+export const UNIT_WIDTH_MAX = 320;
 
 /**
  * يشتق مقياس المحتوى من العرض حتى ينمو الخط والمسافات مع المربع.
