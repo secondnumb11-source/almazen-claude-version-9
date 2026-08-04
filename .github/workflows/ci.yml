@@ -1,0 +1,55 @@
+name: CI — Outbox tests + Vercel build
+
+# يعمل تلقائياً قبل كل Push (على أي فرع) وعلى كل Pull Request.
+# أي فشل في اختبارات Outbox أو في بناء Vercel يُوقف سير العمل برسالة واضحة.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Outbox tests + build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NITRO_PRESET: vercel
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://example.supabase.co' }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY || 'public-anon-key-placeholder' }}
+      VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID || 'example' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Accounting integrity integration tests
+        run: |
+          set -o pipefail
+          bun run vitest run src/lib/__tests__/accounting-integrity.test.js src/lib/__tests__/settlementLedger.test.js --reporter=verbose \
+            || { echo "::error title=Accounting integrity failed::فشل اختبارات توازن القيود / الدفعات غير المرحّلة / صحة الاستعلامات — تم إيقاف الـ Push."; exit 1; }
+
+      - name: Outbox + branding regression tests
+        run: |
+          set -o pipefail
+          bun run vitest run src/lib/__tests__/outbox.test.js src/lib/__tests__/referral-step-emails.test.js src/routes/__tests__/-brand-favicon.test.js --reporter=verbose \
+            || { echo "::error title=Outbox tests failed::فشل اختبارات صندوق الصادر أو تثبيت الشعار — تم إيقاف الـ Push."; exit 1; }
+
+      - name: Full test suite
+        run: |
+          set -o pipefail
+          bun run test || { echo "::error title=Test suite failed::فشل في مجموعة الاختبارات الكاملة."; exit 1; }
+
+      - name: Vercel production build
+        run: |
+          set -o pipefail
+          bun run build || { echo "::error title=Vercel build failed::فشل بناء Vercel — لا تنشر هذا الإصدار."; exit 1; }

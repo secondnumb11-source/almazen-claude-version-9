@@ -1,0 +1,767 @@
+
+
+.notif-item.unread {
+  background: var(--bg-hover);
+  border-right: 3px solid var(--primary);
+}
+
+/* ===== الفاتورة الضريبية الفاخرة (InvoiceView / ZATCA / Settlement Preview) ===== */
+.lux-inv {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #E2E9F2;
+  border-radius: 14px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(10,25,47,.08);
+  font-family: 'Cairo', 'Tajawal', sans-serif;
+}
+.lux-inv-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 22px;
+  background: linear-gradient(120deg, #0A192F 0%, #1e3a5f 100%) !important;
+  color: #ffffff !important;
+  border-bottom: 4px solid #C6A24B;
+  position: relative;
+}
+.lux-inv-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lux-inv-brand img {
+  width: 62px;
+  height: 62px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #ffffff;
+  padding: 3px;
+}
+.lux-inv-logo-fallback {
+  width: 62px;
+  height: 62px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #F5D97E, #C6A24B);
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+}
+.lux-inv-brand h2 {
+  font-family: 'Cairo';
+  font-size: 20px;
+  color: #F5D97E !important;
+  margin: 0;
+}
+.lux-inv-meta {
+  font-size: 11.5px;
+  opacity: .9;
+  margin-top: 2px;
+  color: #e2e8f0;
+}
+.lux-inv-title {
+  text-align: end;
+}
+.lux-inv-title-ar {
+  font-family: 'Cairo';
+  font-size: 17px;
+  font-weight: 900;
+  color: #F5D97E !important;
+}
+.lux-inv-title-en {
+  font-size: 10.5px;
+  letter-spacing: 2px;
+  opacity: .75;
+  margin-top: 2px;
+  color: #cbd5e1;
+}
+.lux-inv-no {
+  margin-top: 8px;
+  font-size: 13px;
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(245,217,126,.4);
+  padding: 5px 10px;
+  border-radius: 8px;
+  display: inline-block;
+  color: #ffffff;
+}
+.lux-inv-info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  padding: 0;
+  border-bottom: 1px solid #E2E9F2;
+  background: #F4F7FB !important;
+}
+.lux-inv-info > div {
+  padding: 12px 14px;
+  border-inline-end: 1px solid #E2E9F2;
+}
+.lux-inv-info > div:last-child {
+  border-inline-end: none;
+}
+.lux-inv-info span {
+  display: block;
+  font-size: 11px;
+  color: #5B6B7C !important;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.lux-inv-info b {
+  font-size: 13.5px;
+  color: #1A3A63 !important;
+}
+.lux-inv-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+.lux-inv-table th {
+  background: linear-gradient(135deg, #F5D97E, #C6A24B) !important;
+  color: #0A192F !important;
+  padding: 10px 12px;
+  font-family: 'Cairo';
+  font-size: 12.5px;
+  font-weight: 900;
+  text-align: start;
+}
+.lux-inv-table td {
+  padding: 12px;
+  border-bottom: 1px solid #E2E9F2;
+  font-size: 13px;
+  color: #0f172a !important;
+}
+.lux-inv-foot {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 16px;
+  padding: 18px 22px;
+  background: #F4F7FB !important;
+}
+.lux-inv-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.lux-inv-qr > div {
+  font-size: 10.5px;
+  color: #5B6B7C !important;
+  text-align: center;
+  max-width: 160px;
+}
+.lux-inv-totals {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lux-inv-totals > div {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #ffffff !important;
+  border: 1px solid #E2E9F2;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #0f172a !important;
+}
+.lux-inv-totals .grand {
+  background: linear-gradient(135deg, #0A192F, #1e3a5f) !important;
+  color: #F5D97E !important;
+  border-color: #C6A24B !important;
+  font-family: 'Cairo';
+  font-size: 16px;
+  font-weight: 900;
+  padding: 12px 14px;
+}
+.lux-inv-terms {
+  padding: 12px 22px;
+  font-size: 11.5px;
+  color: #5B6B7C !important;
+  text-align: center;
+  border-top: 1px dashed #E2E9F2;
+  background: #ffffff !important;
+}
+
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  .print-hide {
+    display: none !important;
+  }
+
+  .print-only, .print-only * {
+    visibility: visible !important;
+  }
+
+  .print-only {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0 !important;
+    padding: 20px !important;
+    background: white;
+    color: black;
+  }
+
+  /* Refined table print layout */
+  .print-only table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+  }
+  .print-only th, .print-only td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: right;
+  }
+  .print-only th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #333;
+  }
+}
+
+/* ===== Luxury Slim Custom Scrollbar (Global Across All Pages & Containers) ===== */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*:not(.sb-nav)::-webkit-scrollbar {
+  width: 5px !important;
+  height: 5px !important;
+}
+
+html::-webkit-scrollbar-button,
+body::-webkit-scrollbar-button,
+*:not(.sb-nav)::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+*:not(.sb-nav)::-webkit-scrollbar-track {
+  background: rgba(3, 10, 22, 0.15) !important;
+  border-radius: 10px !important;
+  border: none !important;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+*:not(.sb-nav)::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #0A192F 0%, #0e223d 25%, #C6A24B 50%, #1b3d68 75%, #0A192F 100%) !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(245, 217, 126, 0.4) !important;
+  box-shadow: 0 0 6px rgba(198, 162, 75, 0.35) !important;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+*:not(.sb-nav)::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #1d487c 0%, #F5D97E 50%, #e0b642 100%) !important;
+  border-color: #F5D97E !important;
+  box-shadow: 0 0 12px rgba(245, 217, 126, 0.85) !important;
+}
+
+html::-webkit-scrollbar-corner,
+body::-webkit-scrollbar-corner,
+*:not(.sb-nav)::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+/* Fallback for Firefox */
+html, body, *:not(.sb-nav) {
+  scrollbar-width: thin;
+  scrollbar-color: #C6A24B rgba(3, 10, 22, 0.15);
+}
+
+
+/* ============================================================
+   C7 — مسطرة عمودية فاخرة على السايدبار (Auto-hide/show)
+   شريط 3px متدرج من الأزرق الداكن للذهبي الداكن
+============================================================ */
+/* ⚠️ لا تُحوّل هذه القاعدة إلى position:relative — هذا الملف يُحمَّل بعد legacy.css
+   وبنفس درجة التخصيص، فيلغي `position: sticky` المعرَّف هناك ويجعل لوحة التنقل
+   تختفي مع التمرير. و`sticky` تُنشئ containing block للعناصر المطلقة
+   (::before / ::after / .sb-rail) تماماً مثل `relative`. */
+.app-sidebar {
+  position: sticky;
+  top: 0;
+}
+.app-sidebar::before {
+  content: '';
+  position: absolute;
+  top: 8%;
+  bottom: 8%;
+  inset-inline-start: 0;
+  width: 3px;
+  background: linear-gradient(180deg,
+    #0F1E4A 0%,
+    #1e3a8a 25%,
+    #B8860B 75%,
+    #8B6508 100%);
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.4s ease, box-shadow 0.4s ease;
+  pointer-events: none;
+  box-shadow: 0 0 0 rgba(184,134,11,0);
+}
+.app-sidebar:hover::before {
+  opacity: 1;
+  box-shadow: 0 0 12px rgba(184,134,11,0.5), 0 0 4px rgba(15,30,74,0.6);
+}
+/* منطقة التكبير/التصغير على الحافة الخارجية */
+.app-sidebar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-end: -4px;
+  width: 8px;
+  cursor: col-resize;
+  z-index: 100;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+.app-sidebar::after:hover {
+  background: linear-gradient(90deg, transparent, rgba(184,134,11,0.15), transparent);
+}
+
+/* =====================================================================
+   مسطرة الحركة الطولية — تصميم فاخر عصري (Sidebar Motion Rail v3)
+   الألوان والسماكة والارتفاع تأتي من إعدادات المستخدم المخزّنة في قاعدة
+   البيانات عبر متغيرات CSS: --rail-accent / --rail-thickness / --rail-height
+   ===================================================================== */
+.app-sidebar {
+  --rail-accent: #C9A84C;
+  --rail-accent-2: #0B1E3F;
+  --rail-thickness: 4px;
+  --rail-height: 72%;
+  --rail-radius: 999px;
+  --rail-glow: 0.55;
+}
+
+.app-sidebar .sb-nav { position: relative; }
+
+/* القضيب الطولي نفسه */
+.sb-rail {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  inset-inline-end: 3px;
+  width: calc(var(--rail-thickness) + 8px);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.sb-rail-track {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 4px;
+  width: 1.5px;
+  border-radius: var(--rail-radius);
+  background: linear-gradient(180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--rail-accent) 22%, transparent) 12%,
+    color-mix(in srgb, var(--rail-accent) 30%, transparent) 50%,
+    color-mix(in srgb, var(--rail-accent) 22%, transparent) 88%,
+    transparent 100%);
+  opacity: 0.35;
+  transition: opacity 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.app-sidebar:hover .sb-rail-track { opacity: 0.9; }
+
+/* مؤشر التحويم — شبح ناعم يسبق المؤشر النشط */
+.sb-rail-ghost {
+  position: absolute;
+  inset-inline-end: 3px;
+  top: 0;
+  width: calc(var(--rail-thickness) - 1px);
+  border-radius: var(--rail-radius);
+  background: color-mix(in srgb, var(--rail-accent) 45%, transparent);
+  opacity: 0;
+  transform-origin: center;
+  transition:
+    transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 260ms ease;
+}
+.sb-rail-ghost.show { opacity: 0.55; }
+
+/* المؤشر النشط — كبسولة ذهبية بارتفاع القسم المحدد */
+.sb-rail-marker {
+  position: absolute;
+  inset-inline-end: 1px;
+  top: 0;
+  width: calc(var(--rail-thickness) + 3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition:
+    transform 460ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 380ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 320ms ease;
+}
+.sb-rail-marker.show { opacity: 1; }
+
+.sb-rail-marker-core {
+  position: absolute;
+  inset-inline-end: 2px;
+  width: var(--rail-thickness);
+  height: var(--rail-height);
+  border-radius: var(--rail-radius);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--rail-accent) 55%, #fff) 0%,
+    var(--rail-accent) 45%,
+    color-mix(in srgb, var(--rail-accent) 70%, var(--rail-accent-2)) 100%);
+  box-shadow:
+    0 0 calc(10px * var(--rail-glow) * 2) color-mix(in srgb, var(--rail-accent) 70%, transparent),
+    inset 0 0 4px rgba(255, 255, 255, 0.45);
+}
+
+.sb-rail-marker-halo {
+  position: absolute;
+  inset-inline-end: -3px;
+  width: calc(var(--rail-thickness) + 10px);
+  height: var(--rail-height);
+  border-radius: var(--rail-radius);
+  background: radial-gradient(ellipse at center,
+    color-mix(in srgb, var(--rail-accent) 40%, transparent) 0%,
+    transparent 70%);
+  opacity: calc(var(--rail-glow) * 0.9);
+  filter: blur(3px);
+  animation: railBreathe 3.4s ease-in-out infinite;
+}
+
+@keyframes railBreathe {
+  0%, 100% { opacity: calc(var(--rail-glow) * 0.55); transform: scaleY(1); }
+  50%      { opacity: calc(var(--rail-glow) * 1); transform: scaleY(1.06); }
+}
+
+/* أنماط بديلة */
+.app-sidebar.rail-ribbon .sb-rail-marker-core {
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--rail-accent), color-mix(in srgb, var(--rail-accent-2) 60%, var(--rail-accent)));
+}
+.app-sidebar.rail-minimal .sb-rail-marker-halo { display: none; }
+.app-sidebar.rail-minimal .sb-rail-track { opacity: 0.2; }
+.app-sidebar.rail-minimal .sb-rail-marker-core { box-shadow: none; }
+
+/* مقبض السحب — مقبض أنيق بدل الخط العاري */
+.sb-resizer-grip {
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 42px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--rail-accent) 55%, transparent);
+  opacity: 0;
+  transition: opacity 260ms ease, height 260ms ease, box-shadow 260ms ease;
+}
+.app-sidebar:hover .sb-resizer-grip { opacity: 0.75; }
+.sb-resizer:hover .sb-resizer-grip,
+.app-sidebar.resizing .sb-resizer-grip {
+  opacity: 1; height: 64px;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--rail-accent) 70%, transparent);
+}
+
+.app-sidebar.collapsed .sb-rail { opacity: 0.7; }
+
+/* =====================================================================
+   مسطرة التمرير الفاخرة للوحة الجانبية  (Luxury Sidebar Scrollbar v3)
+   ---------------------------------------------------------------------
+   لماذا مسطرة مرسومة بدل تنسيق شريط المتصفح؟
+   منذ Chromium 121، إذا عُرّف `scrollbar-width` أو `scrollbar-color` على
+   عنصر فإن المتصفح يتجاهل كل قواعد `::-webkit-scrollbar` عليه ويرسم شريط
+   النظام. والخاصيتان المعياريتان لا تدعمان إلا لونين مسطّحين و thin/auto —
+   بلا تدرّج أو استدارة أو توهج أو اختفاء تدريجي. لذلك نُخفي شريط النظام
+   تماماً هنا، ونرسم المسطرة بأنفسنا فنملك تصميمها بالكامل.
+   ⚠️ لا تُعِد `scrollbar-width: thin` إلى .sb-nav — سيعود شريط النظام الرمادي.
+   ===================================================================== */
+.app-sidebar .sb-nav,
+.app-sidebar.luxury-scroll .sb-nav {
+  scrollbar-width: none !important;
+  scrollbar-color: auto !important;
+  -ms-overflow-style: none !important;
+  scrollbar-gutter: auto !important;
+  scroll-behavior: smooth;
+}
+.app-sidebar .sb-nav::-webkit-scrollbar,
+.app-sidebar.luxury-scroll .sb-nav::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+/* حاوية المسطرة — تُثبَّت بصرياً على حافة اللوحة عبر تعويض scrollTop في JSX */
+.app-sidebar .sb-sbar {
+  position: absolute;
+  top: 0;
+  inset-inline-end: 1px;
+  width: 12px;                 /* منطقة التقاط مريحة للماوس */
+  z-index: 6;
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;                  /* مخفية تماماً عند السكون */
+  transition: opacity 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* الظهور: عند التحويم على اللوحة، أو أثناء التمرير، أو أثناء السحب */
+.app-sidebar:hover .sb-sbar,
+.app-sidebar .sb-sbar.awake,
+.app-sidebar .sb-sbar.dragging,
+.app-sidebar .sb-sbar:hover,
+.app-sidebar.auto-preview .sb-sbar { opacity: 1; }
+
+/* المسار — خيط شعري بالكاد يُرى، يتلاشى عند الطرفين */
+.app-sidebar .sb-sbar-track {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(180deg,
+    rgba(201, 168, 76, 0) 0%,
+    rgba(201, 168, 76, 0.16) 22%,
+    rgba(201, 168, 76, 0.16) 78%,
+    rgba(201, 168, 76, 0) 100%);
+  transition: width 260ms cubic-bezier(0.22, 1, 0.36, 1), background 260ms ease;
+}
+.app-sidebar .sb-sbar:hover .sb-sbar-track,
+.app-sidebar .sb-sbar.dragging .sb-sbar-track {
+  width: 3px;
+  background: linear-gradient(180deg,
+    rgba(11, 30, 63, 0) 0%,
+    rgba(201, 168, 76, 0.26) 22%,
+    rgba(201, 168, 76, 0.26) 78%,
+    rgba(11, 30, 63, 0) 100%);
+}
+
+/* الإبهام — كبسولة ذهبية رفيعة بتدرّج معدني ولمعة علوية */
+.app-sidebar .sb-sbar-thumb {
+  position: absolute;
+  top: 0;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #F7DE94 0%, #E7C765 34%, #C9A84C 68%, #A9862E 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 245, 205, 0.55),
+    inset 0 -1px 0 rgba(80, 55, 10, 0.28),
+    0 0 6px rgba(232, 200, 108, 0.28);
+  cursor: grab;
+  touch-action: none;          /* حتى يعمل السحب باللمس دون تمرير الصفحة */
+  transition: width 240ms cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 240ms ease,
+              filter 240ms ease;
+}
+.app-sidebar .sb-sbar:hover .sb-sbar-thumb {
+  width: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 250, 220, 0.7),
+    inset 0 -1px 0 rgba(80, 55, 10, 0.3),
+    0 0 12px rgba(232, 200, 108, 0.5);
+}
+.app-sidebar .sb-sbar.dragging .sb-sbar-thumb {
+  width: 6px;
+  cursor: grabbing;
+  filter: brightness(1.12);
+  box-shadow:
+    inset 0 0 6px rgba(80, 55, 10, 0.35),
+    0 0 18px rgba(245, 217, 126, 0.75);
+}
+
+/* احترام تفضيل تقليل الحركة */
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar .sb-sbar,
+  .app-sidebar .sb-sbar-track,
+  .app-sidebar .sb-sbar-thumb { transition: none; }
+  .app-sidebar .sb-nav { scroll-behavior: auto; }
+}
+
+/* المسطرة الملاحية (مؤشر القسم النشط) تُزاح للداخل حتى لا تتداخل مع مسطرة التمرير */
+.app-sidebar .sb-rail { inset-inline-end: 11px; }
+
+/* حقول لوحة مراقب العزل */
+.iso-field {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--soft, #F8FAFC);
+}
+
+/* =====================================================================
+   مربعات الوحدات — مقاس قابل للتحكم من المستخدم
+   ---------------------------------------------------------------------
+   متغيّران فقط يقودان كل شيء ويُحقنان من React:
+     --u-card-w  عرض عمود الشبكة   → كم مربعاً يظهر في السطر
+     --u-scale   مقياس المحتوى     → حجم الخطوط والمسافات داخل المربع
+   كل المقاسات الداخلية بوحدة `em` مشتقّة من font-size المربع، فيكفي
+   ضبط المتغيّرين ليتناسق المربع بالكامل دون أي قيمة px متناثرة.
+   ===================================================================== */
+.units-grid {
+  --u-card-w: 190px;
+  --u-scale: 0.91;
+  grid-template-columns: repeat(auto-fill, minmax(var(--u-card-w), 1fr));
+  gap: calc(0.9em * var(--u-scale) + 4px);
+}
+/* يتجاوز .units-grid-compact الثابت في legacy.css */
+.units-grid.units-grid-compact {
+  grid-template-columns: repeat(auto-fill, minmax(var(--u-card-w), 1fr));
+}
+/* على الشاشات الضيقة يبقى عمود واحد مهما كان المقاس المختار */
+@media (max-width: 560px) {
+  .units-grid, .units-grid.units-grid-compact { grid-template-columns: 1fr; }
+}
+
+.units-grid .unit-tile-sm {
+  font-size: calc(11.5px * var(--u-scale));
+  min-height: calc(19em);
+  padding: 1.15em 1.15em 0.95em;
+  border-radius: 1.3em;
+  gap: 0.55em;
+}
+
+/* ——— رأس المربع: رقم الوحدة والتصنيف ——— */
+.units-grid .unit-tile-sm .uc-top { display: flex; gap: 0.7em; align-items: center; margin-top: 1.5em; }
+/* المقاس بـ calc على --u-scale وليس بـ em: النسخة الفارغة تكبّر خطها لإظهار
+   الأيقونة، ولو كان العرض بـ em لاختلف حجمها عن مربع الصورة الحقيقية. */
+.units-grid .unit-tile-sm .uc-thumb {
+  --uc-thumb-size: calc(48px * var(--u-scale));
+  width: var(--uc-thumb-size); height: var(--uc-thumb-size); flex: 0 0 var(--uc-thumb-size);
+  border-radius: 0.9em; object-fit: cover;
+  border: 1.5px solid rgba(231, 200, 115, 0.35); background: rgba(0, 0, 0, 0.15);
+}
+.units-grid .unit-tile-sm .uc-thumb-empty {
+  display: grid; place-items: center; opacity: 0.7;
+  font-size: calc(21px * var(--u-scale));
+}
+.units-grid .unit-tile-sm .uc-head { min-width: 0; flex: 1; }
+.units-grid .unit-tile-sm .uc-num {
+  font-family: 'Cairo', sans-serif; font-size: 1.6em; font-weight: 900; line-height: 1.15;
+  display: flex; align-items: center; gap: 0.35em; letter-spacing: 0.2px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+}
+.units-grid .unit-tile-sm .uc-cat {
+  font-size: 0.98em; font-weight: 700; opacity: 0.95; margin-top: 0.25em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.units-grid .unit-tile-sm .uc-flag {
+  font-size: 0.82em; font-weight: 800; padding: 0.15em 0.5em; border-radius: 0.5em;
+  background: #DC2626; color: #fff; white-space: nowrap;
+}
+
+/* ——— صف الأسعار: تسمية فوق القيمة بدل سطر مزدحم ——— */
+.units-grid .unit-tile-sm .uc-prices {
+  margin-top: 0.7em; padding-top: 0.6em; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5em;
+  border-top: 1px dashed rgba(255, 255, 255, 0.22);
+}
+.units-grid .unit-tile-sm .uc-price-lbl { font-size: 0.82em; opacity: 0.8; font-weight: 700; display: block; }
+.units-grid .unit-tile-sm .uc-price-val {
+  font-family: 'Cairo', sans-serif; font-size: 1.12em; font-weight: 900; line-height: 1.25;
+  white-space: nowrap; display: block;
+}
+.units-grid .unit-tile-sm .uc-price-cur { font-size: 0.72em; font-weight: 700; opacity: 0.85; margin-inline-start: 0.2em; }
+
+/* ——— صندوق الحالة/النزيل: ارتفاع موحّد فتبقى كل المربعات متساوية ——— */
+.units-grid .unit-tile-sm .uc-info {
+  margin-top: 0.7em; height: 5.15em; padding: 0.5em 0.75em; border-radius: 0.9em;
+  display: flex; flex-direction: column; justify-content: center; gap: 0.15em;
+  box-sizing: border-box; font-size: 0.95em; overflow: hidden;
+}
+.units-grid .unit-tile-sm .uc-info-row { display: flex; align-items: center; justify-content: space-between; gap: 0.4em; }
+.units-grid .unit-tile-sm .uc-info-ttl { font-weight: 900; font-size: 1.02em; white-space: nowrap; }
+.units-grid .unit-tile-sm .uc-info-tag {
+  font-size: 0.86em; font-weight: 700; padding: 0.1em 0.45em; border-radius: 0.4em;
+  background: rgba(255, 255, 255, 0.22); white-space: nowrap;
+}
+.units-grid .unit-tile-sm .uc-guest {
+  font-weight: 800; font-size: 0.98em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.units-grid .unit-tile-sm .uc-dates { display: flex; justify-content: space-between; gap: 0.4em; font-size: 0.88em; opacity: 0.95; }
+.units-grid .unit-tile-sm .uc-dates span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.units-grid .unit-tile-sm .uc-info-center { align-items: center; justify-content: center; text-align: center; font-weight: 800; }
+
+/* ——— شريط الإجراءات السفلي ——— */
+.units-grid .unit-tile-sm .uc-actions {
+  margin-top: 0.7em; padding-top: 0.5em; display: flex; align-items: center; gap: 0.5em;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+.units-grid .unit-tile-sm .uc-btn {
+  font-size: 0.92em; font-weight: 800; padding: 0.35em 0.85em; border-radius: 0.7em;
+  border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.3em;
+  white-space: nowrap; color: #fff; font-family: inherit;
+}
+.units-grid .unit-tile-sm .uc-btn-settle { background: linear-gradient(135deg, #059669 0%, #047857 100%); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25); }
+.units-grid .unit-tile-sm .uc-btn-cancel { background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25); }
+.units-grid .unit-tile-sm .uc-btn-qr {
+  background: rgba(255, 255, 255, 0.18); border: 1px solid rgba(255, 255, 255, 0.3);
+  margin-inline-start: auto;
+}
+
+/* شارة الحالة والنبضة تكبر مع المربع أيضاً */
+.units-grid .unit-tile-sm .st {
+  font-size: 0.92em; padding: 0.2em 0.75em; top: 0.75em; inset-inline-end: 0.75em;
+  display: inline-flex; align-items: center; gap: 0.4em; font-weight: 800; cursor: pointer;
+  font-family: inherit;
+}
+.units-grid .unit-tile-sm .stpulse { top: 1.1em; inset-inline-start: 1em; width: 0.65em; height: 0.65em; }
+
+/* الوحدات في وضع الصيانة/التنظيف: نص داكن على خلفية فاتحة */
+.units-grid .unit-tile-sm.u-mn .uc-info, .units-grid .unit-tile-sm.u-cl .uc-info { color: #0F172A; }
+.units-grid .unit-tile-sm.u-mn .uc-prices, .units-grid .unit-tile-sm.u-cl .uc-prices { border-top-color: rgba(0, 0, 0, 0.22); }
+.units-grid .unit-tile-sm.u-mn .uc-actions, .units-grid .unit-tile-sm.u-cl .uc-actions { border-top-color: rgba(0, 0, 0, 0.15); }
+.units-grid .unit-tile-sm.u-mn .uc-btn-qr, .units-grid .unit-tile-sm.u-cl .uc-btn-qr {
+  background: rgba(0, 0, 0, 0.12); border-color: rgba(0, 0, 0, 0.25); color: #0F172A;
+}
+
+/* =====================================================================
+   شريط التحكم بمقاس المربعات — يظهر أعلى صفحة إدارة الوحدات
+   ===================================================================== */
+.uc-sizer {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 10px 14px; margin-bottom: 14px;
+  background: linear-gradient(135deg, #FFFDF7 0%, #FDF8EC 100%);
+  border: 1px solid rgba(201, 168, 76, 0.45); border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(201, 168, 76, 0.08);
+}
+.uc-sizer-lbl { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 800; color: #6B5417; }
+.uc-sizer-hint { font-size: 11.5px; color: #8A7434; font-weight: 600; }
+.uc-sizer-seg { display: flex; gap: 4px; background: rgba(201, 168, 76, 0.1); padding: 3px; border-radius: 10px; }
+.uc-sizer-seg button {
+  border: none; background: transparent; cursor: pointer; font-family: inherit;
+  font-size: 11.5px; font-weight: 800; color: #6B5417;
+  padding: 5px 11px; border-radius: 8px; transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+.uc-sizer-seg button:hover { background: rgba(201, 168, 76, 0.2); }
+.uc-sizer-seg button.on {
+  background: linear-gradient(135deg, #C9A84C 0%, #A8862F 100%); color: #fff;
+  box-shadow: 0 2px 8px rgba(201, 168, 76, 0.4);
+}
+.uc-sizer-range { display: flex; align-items: center; gap: 8px; margin-inline-start: auto; }
+.uc-sizer-range input[type="range"] { width: 132px; accent-color: #C9A84C; cursor: pointer; }
+.uc-sizer-val {
+  font-size: 11.5px; font-weight: 800; color: #6B5417; font-family: 'Cairo', sans-serif;
+  min-width: 46px; text-align: center; background: rgba(201, 168, 76, 0.14);
+  padding: 3px 7px; border-radius: 6px;
+}
+.uc-sizer-reset {
+  border: 1px solid rgba(201, 168, 76, 0.5); background: #fff; color: #6B5417;
+  font-family: inherit; font-size: 11.5px; font-weight: 800;
+  padding: 5px 11px; border-radius: 8px; cursor: pointer; transition: background 0.18s ease;
+}
+.uc-sizer-reset:hover { background: #FDF8EC; }
+@media (max-width: 640px) {
+  .uc-sizer-range { margin-inline-start: 0; width: 100%; }
+  .uc-sizer-range input[type="range"] { flex: 1; width: auto; }
+}
