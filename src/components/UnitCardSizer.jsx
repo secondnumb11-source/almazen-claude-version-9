@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-import { Maximize2, RotateCcw, EyeOff, SlidersHorizontal } from 'lucide-react'
-import { UNIT_SIZE_PRESETS, UNIT_WIDTH_MIN, UNIT_WIDTH_MAX, DEFAULT_UNIT_GRID } from '../hooks/useUnitCardSize'
+﻿import React, { useState } from 'react'
+import { Maximize2, RotateCcw, EyeOff, SlidersHorizontal, LayoutGrid, Rows3 } from 'lucide-react'
+import { UNIT_VIEWS, viewLimits, DEFAULT_UNIT_GRID } from '../hooks/useUnitCardSize'
 
 const HIDE_KEY = 'almazen.units.sizerHidden'
 
@@ -20,8 +20,10 @@ export default function UnitCardSizer({ grid, onChange, onReset, visibleCount })
     try { localStorage.setItem(HIDE_KEY, v ? '1' : '0') } catch { /* التخزين قد يكون معطّلاً */ }
   }
 
-  const activePreset = UNIT_SIZE_PRESETS.find(p => p.width === grid.width)
-  const isDefault = grid.width === DEFAULT_UNIT_GRID.width
+  const view = grid.view === 'compact' ? 'compact' : 'detailed'
+  const L = viewLimits(view)
+  const activePreset = L.presets.find(p => p.width === grid.width)
+  const isDefault = view === DEFAULT_UNIT_GRID.view && grid.width === DEFAULT_UNIT_GRID.width
 
   // مخفي: زر صغير فقط يعيد إظهار الشريط
   if (hidden) {
@@ -43,11 +45,28 @@ export default function UnitCardSizer({ grid, onChange, onReset, visibleCount })
     <div className="uc-sizer" role="group" aria-label="التحكم بمقاس مربعات الوحدات">
       <div className="uc-sizer-lbl">
         <Maximize2 size={15} />
-        مقاس مربعات الوحدات
+        عرض الوحدات
+      </div>
+
+      {/* منتقي نمط العرض — يُحفظ في حساب المستخدم مثل المقاس */}
+      <div className="uc-sizer-view" role="group" aria-label="نمط عرض الوحدات">
+        {UNIT_VIEWS.map(v => (
+          <button
+            key={v.id}
+            type="button"
+            className={view === v.id ? 'on' : ''}
+            onClick={() => onChange({ view: v.id })}
+            title={v.hint}
+            aria-pressed={view === v.id}
+          >
+            {v.id === 'compact' ? <Rows3 size={13} /> : <LayoutGrid size={13} />}
+            {v.label}
+          </button>
+        ))}
       </div>
 
       <div className="uc-sizer-seg">
-        {UNIT_SIZE_PRESETS.map(p => (
+        {L.presets.map(p => (
           <button
             key={p.id}
             type="button"
@@ -62,15 +81,15 @@ export default function UnitCardSizer({ grid, onChange, onReset, visibleCount })
       </div>
 
       <span className="uc-sizer-hint">
-        اسحب الشريط للضبط الدقيق — يُحفظ اختيارك في حسابك تلقائياً ويعود كما تركته عند الدخول مرة أخرى
+        {view === 'compact' ? 'النمط المختصر: الرقم والتصنيف والحالة فقط.' : 'النمط التفصيلي: البطاقة الكاملة.'} اسحب الشريط للضبط الدقيق — يُحفظ اختيارك في حسابك ويعود كما تركته
         {typeof visibleCount === 'number' ? ` · ${visibleCount} وحدة معروضة` : ''}
       </span>
 
       <div className="uc-sizer-range">
         <input
           type="range"
-          min={UNIT_WIDTH_MIN}
-          max={UNIT_WIDTH_MAX}
+          min={L.min}
+          max={L.max}
           step={2}
           value={grid.width}
           onChange={e => onChange({ preset: 'custom', width: Number(e.target.value) })}

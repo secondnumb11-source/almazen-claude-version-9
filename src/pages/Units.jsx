@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+﻿import React, { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../AuthContext'
 import { useBranches } from '../BranchContext'
@@ -24,6 +24,7 @@ import BookingQRScannerModal from '../components/BookingQRScannerModal'
 import { WifiOff, QrCode } from 'lucide-react'
 import { saveOperationalCache, getOperationalCache } from '../lib/offlineManager'
 import UnitCardSizer from '../components/UnitCardSizer'
+import CompactUnitCard from '../components/CompactUnitCard'
 import { useUnitCardSize, unitGridCssVars } from '../hooks/useUnitCardSize'
 
 /* ============ الشاشة الرئيسية للوحدات ============ */
@@ -321,6 +322,35 @@ export default function Units() {
         />
       )}
 
+      {unitGrid.view === 'compact' ? (
+        /* النمط المختصر — بطاقة بثلاثة عناصر. النقر يفتح نفس نافذة التفاصيل بلا تغيير. */
+        <div className="units-grid-compactview" style={unitGridCssVars(unitGrid)}>
+          {filtered.map(u => {
+            const bk = activeBk[u.id]
+            const hoursLeft = bk?.check_out_date
+              ? (new Date(bk.check_out_date + 'T23:59:59') - Date.now()) / 3600000
+              : Infinity
+            return (
+              <CompactUnitCard
+                key={u.id} u={u} STATUS={STATUS} CATS={CATS}
+                evictSoon={hoursLeft >= 0 && hoursLeft <= 24}
+                onClick={(unit) => { setModalTab('info'); setSel(unit) }}
+                onQuickStatusChange={async (unit, newStatus) => {
+                  const { error } = await supabase.from('units').update({ status: newStatus }).eq('id', unit.id)
+                  if (error) return toast('خطأ: ' + error.message, true)
+                  toast(`✓ تم تحديث حالة الوحدة ${unit.unit_number} إلى ${STATUS[newStatus]?.label || newStatus}`)
+                  load()
+                }}
+              />
+            )
+          })}
+          {filtered.length === 0 && units.length > 0 && (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--muted)', padding: 30 }}>
+              لا توجد وحدات مطابقة لبحثك
+            </div>
+          )}
+        </div>
+      ) : (
       <div className="units-grid units-grid-compact" style={unitGridCssVars(unitGrid)}>
         {filtered.map(u => {
           const bk = activeBk[u.id]
@@ -354,6 +384,7 @@ export default function Units() {
           </div>
         )}
       </div>
+      )}
 
       {sel && <UnitModal unit={sel} initialTab={modalTab} onClose={() => { setSel(null); load() }} />}
       {addOpen && <UnitForm onClose={() => { setAddOpen(false); load() }} />}
