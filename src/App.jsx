@@ -14,6 +14,19 @@ const EjarPanel = lazy(() => import('./pages/EjarPanel'))
 const ChannelManagerPanel = lazy(() => import('./pages/ChannelManagerPanel'))
 const SettlementHistory = lazy(() => import('./pages/SettlementHistory'))
 const AuditReport = lazy(() => import('./pages/AuditReport'))
+// النظام المحاسبي الكامل — دفتر الأستاذ والقيود والميزان والتقارير
+const GeneralLedgerPage = lazy(() => import('./pages/accounting/GeneralLedgerPage'))
+const TrialBalancePage = lazy(() => import('./pages/accounting/TrialBalancePage'))
+const JournalListPage = lazy(() => import('./pages/accounting/JournalListPage'))
+const ChartOfAccountsPage = lazy(() => import('./pages/accounting/ChartOfAccountsPage'))
+const CostCentersPage = lazy(() => import('./pages/accounting/CostCentersPage'))
+const TaxCenterPage = lazy(() => import('./pages/accounting/TaxCenterPage'))
+const ServicesPage = lazy(() => import('./pages/accounting/ServicesPage'))
+const DeferredPage = lazy(() => import('./pages/accounting/DeferredPage'))
+const AccountingSettingsPage = lazy(() => import('./pages/accounting/AccountingSettingsPage'))
+const ReportsHubPage = lazy(() => import('./pages/accounting/ReportsHubPage'))
+const TestsHubPage = lazy(() => import('./pages/accounting/TestsHubPage'))
+const OdooPage = lazy(() => import('./pages/accounting/OdooPage'))
 import { AuthProvider, useAuth } from './AuthContext'
 import { supabase, hasSupabaseConfig } from './lib/supabase'
 import Login from './pages/Login'
@@ -37,10 +50,38 @@ import { runDailyNotificationChecks } from './lib/notifications'
 import GlobalSearch from './components/GlobalSearch'
 import { getOfflineQueue, syncOfflineQueue } from './lib/offlineManager'
 
+/** مفاتيح صفحات النظام المحاسبي — تُستخدم لبوابة صلاحية واحدة بدل شرط لكل صفحة. */
+const ACCT_PAGES = new Set([
+  'je-new', 'je-list', 'je-report', 'gl', 'coa', 'cost-centers', 'tb', 'tb-check',
+  'vat', 'deferred-rev', 'deferred-exp', 'acct-settings', 'reports-hub', 'tests-hub', 'odoo',
+])
+const acctPage = (p) => ACCT_PAGES.has(p) || String(p).startsWith('services')
+
+/**
+ * يحدّد القسم الذي يفتحه الإشعار عند النقر عليه.
+ * الأولوية للكيان المرفق (صيانة/وحدة/عميل) ثم لنوع الحدث، فإن لم يُعرف
+ * يُفتح لوحة الوحدات لأنها أقرب سياق تشغيلي بدل ترك النقرة بلا أثر.
+ */
+function notifTarget(n) {
+  const ev = n?.event_type || ''
+  if (ev.startsWith('maintenance') || ev === 'handover') return 'maintenance'
+  if (ev.startsWith('iqama') || ev === 'welcome_message' || ev.startsWith('contract')) return 'customers'
+  if (ev === 'new_payment') return 'reports'
+  if (ev === 'tenant_service_request') return 'maintenance'
+  if (ev === 'new_booking' || ev === 'new_lease_started') return 'dash'
+  if (n?.unit_id || n?.booking_id) return 'dash'
+  if (n?.customer_id) return 'customers'
+  return 'dash'
+}
+
 function Shell() {
   const { session, profile, company, access, loading, isOwner, canFinance, isSuperAdmin, toast } = useAuth()
   const [forceUpgrade, setForceUpgrade] = useState(false)
   const [page, setPage] = useState('home')
+  // القيد المطلوب فتحه عند القدوم من دفتر الأستاذ أو من إشعار
+  const [openEntryId, setOpenEntryId] = useState(undefined)
+  // صلاحية دخول النظام المحاسبي — نفس صلاحية بقية الشاشات المالية
+  const canAcct = canFinance || profile?.role === 'accountant'
   const [notifs, setNotifs] = useState([])
   const [evictionAlerts, setEvictionAlerts] = useState([])
   const [drawer, setDrawer] = useState(false)
@@ -353,10 +394,19 @@ function Shell() {
           </div>
         </header>
 
+        {/* طبقة شفافة تغلق الإشعارات بالنقر خارج المربع — كانت اللوحة تُفتح ولا تُغلق أبداً */}
+        {drawer && <div className="notif-backdrop" onClick={() => setDrawer(false)} aria-hidden="true" />}
+
         {drawer && (
-          <div className="notif-drawer">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div className="notif-drawer" role="dialog" aria-label="الإشعارات">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8 }}>
               <h4 style={{ margin: 0 }}>الإشعارات</h4>
+              <button
+                className="notif-close"
+                onClick={() => setDrawer(false)}
+                title="إغلاق الإشعارات"
+                aria-label="إغلاق الإشعارات"
+              >✕</button>
               {unread > 0 && (
                 <button className="btn btn-ghost btn-sm" onClick={async () => {
                   await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('company_id', profile.company_id).is('read_at', null);
@@ -377,15 +427,30 @@ function Shell() {
             )}
             {visibleNotifs.length === 0 && evictionAlerts.length === 0 && <div className="notif-item">لا توجد إشعارات بعد</div>}
             {visibleNotifs.map(n => (
-              <div className={"notif-item" + (!n.read_at ? " unread" : "")} key={n.id}>
+              <button
+                type="button"
+                className={"notif-item notif-item-btn" + (!n.read_at ? " unread" : "")}
+                key={n.id}
+                title="فتح القسم الخاص بهذا الإشعار"
+                onClick={async () => {
+                  // النقر يفتح القسم المعني ويعلّم الإشعار مقروءاً في آن واحد
+                  setPage(notifTarget(n))
+                  setDrawer(false)
+                  if (!n.read_at) {
+                    const at = new Date().toISOString()
+                    setNotifs(list => list.map(x => (x.id === n.id ? { ...x, read_at: at } : x)))
+                    await supabase.from('notifications').update({ read_at: at }).eq('id', n.id)
+                  }
+                }}
+              >
                 <b>
-                  {n.title} 
+                  {n.title}
                   {n.channel !== 'in_app' && <span className="chip" style={{ background: 'var(--soft)', color: 'var(--green)', marginRight: 4 }}>{n.channel === 'whatsapp' ? 'واتساب' : n.channel}</span>}
                   {!n.read_at && <span style={{ color: 'var(--primary)', fontSize: 10, marginRight: 4 }}>⚫ جديد</span>}
                 </b>
                 {n.body}
                 <br /><time>{new Date(n.created_at).toLocaleString('ar-SA')}</time>
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -398,6 +463,27 @@ function Shell() {
           {page === 'customers' && <CustomersManagement />}
           {page === 'ops' && <EmployeeOps />}
           {page === 'staff' && canFinance && <EmployeeManagement />}
+          {/* ===== النظام المحاسبي ===== */}
+          {acctPage(page) && canAcct && (
+            <>
+              {page === 'je-new' && <JournalListPage initialEntryId={null} />}
+              {page === 'je-list' && <JournalListPage key={openEntryId || 'list'} initialEntryId={openEntryId} />}
+              {page === 'je-report' && <JournalListPage mode="report" />}
+              {page === 'gl' && <GeneralLedgerPage onOpenEntry={(id) => { setOpenEntryId(id); setPage('je-list') }} />}
+              {page === 'coa' && <ChartOfAccountsPage />}
+              {page === 'cost-centers' && <CostCentersPage />}
+              {(page === 'tb' || page === 'tb-check') && <TrialBalancePage />}
+              {page === 'vat' && <TaxCenterPage />}
+              {page.startsWith('services') && <ServicesPage initialCategory={page.split(':')[1] || 'all'} />}
+              {page === 'deferred-rev' && <DeferredPage kind="revenue" />}
+              {page === 'deferred-exp' && <DeferredPage kind="expense" />}
+              {page === 'acct-settings' && <AccountingSettingsPage />}
+              {page === 'reports-hub' && <ReportsHubPage />}
+              {page === 'tests-hub' && <TestsHubPage />}
+              {page === 'odoo' && <OdooPage />}
+            </>
+          )}
+
           {page === 'reports' && (canFinance || profile?.role === 'accountant') && <Reports />}
           {page === 'settlements' && (canFinance || profile?.role === 'accountant') && <SettlementHistory />}
           {page === 'audit' && ((canFinance || profile?.role === 'accountant')

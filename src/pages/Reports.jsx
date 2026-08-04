@@ -10,7 +10,6 @@ import AccountantTools from './AccountantTools'
 import AccountingCore from './AccountingCore'
 import Assistant from './Assistant'
 import DiscountApprovals from '../components/DiscountApprovals'
-import { ReportGenerator } from '../components/ReportGenerator'
 import ReportPrintButton from '../components/ReportPrintButton'
 
 export default function Reports() {
@@ -117,8 +116,9 @@ export default function Reports() {
             <div className="kpi"><div className="v">{kpi ? kpi.stayAvg + ' يوم' : '…'}</div><div className="l">متوسط مدة الإقامة</div></div>
             <div className="kpi"><div className="v">{kpi ? kpi.cancelRate + '%' : '…'}</div><div className="l">معدل الإلغاء</div></div>
           </div>
-          <ReportGenerator companyId={profile.company_id} />
-          
+          {/* نُقل مولّد التقارير إلى «مركز التقارير المحاسبية» في القائمة الجانبية
+              حتى لا تزدحم هذه الصفحة بمربعات لا علاقة لها بمؤشراتها. */}
+
           <div className="grid2">
             <div className="panel"><h3>الإيرادات حسب نوع الوحدة</h3>
               {byType.length === 0 ? <p style={{ color: 'var(--muted)', fontSize: 13 }}>لا توجد إيرادات مسجلة بعد</p> :

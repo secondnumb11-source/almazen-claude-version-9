@@ -21,8 +21,16 @@ function readStoredWidth() {
  *
  * Returns refs / handlers to wire into the sidebar and its resizer element.
  */
-export function useSidebarResize({ collapsed, onAutoExpand, onAutoCollapse } = {}) {
-  const [userWidth, setUserWidth] = useState(readStoredWidth)
+export function useSidebarResize({ collapsed, onAutoExpand, onAutoCollapse, width, onWidthCommit } = {}) {
+  const [userWidth, setUserWidth] = useState(() => (
+    Number.isFinite(width) && width >= MIN_WIDTH && width <= MAX_WIDTH ? width : readStoredWidth()
+  ))
+
+  // العرض المحفوظ في حساب المستخدم يقود المكوّن؛ السحب يبقى فورياً محلياً
+  // ثم يُثبَّت في الحساب عند رفع المؤشر.
+  useEffect(() => {
+    if (Number.isFinite(width) && width >= MIN_WIDTH && width <= MAX_WIDTH) setUserWidth(width)
+  }, [width])
   const [autoPreview, setAutoPreview] = useState(false) // temporary expand while collapsed
   const [dragging, setDragging] = useState(false)
   const asideRef = useRef(null)
@@ -54,6 +62,7 @@ export function useSidebarResize({ collapsed, onAutoExpand, onAutoCollapse } = {
     const onUp = () => {
       setDragging(false)
       dragStartRef.current = null
+      setUserWidth(w => { onWidthCommit?.(w); return w })
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
       document.body.style.userSelect = ''
@@ -63,7 +72,7 @@ export function useSidebarResize({ collapsed, onAutoExpand, onAutoCollapse } = {
     window.addEventListener('pointerup', onUp)
     document.body.style.userSelect = 'none'
     document.body.style.cursor = 'ew-resize'
-  }, [collapsed, userWidth])
+  }, [collapsed, userWidth, onWidthCommit])
 
   // Auto-expand while collapsed — listen to mousemove near the inner edge
   useEffect(() => {

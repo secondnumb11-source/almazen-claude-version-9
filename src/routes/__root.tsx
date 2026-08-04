@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import legacyCss from "../legacy.css?url";
 import legacyExtraCss from "../legacy-extra.css?url";
+import accountingCss from "../accounting.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 
@@ -104,6 +105,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: legacyCss },
       { rel: "stylesheet", href: legacyExtraCss },
+      { rel: "stylesheet", href: accountingCss },
       // ⚠️ شعار المنصة مثبَّت — لا يجوز تغييره أو إعادته لشعار أي منصة أخرى.
       // ملفات الشعار: public/favicon.png / favicon-192.png / favicon-512.png / favicon.ico
       // (اختبار الحماية: src/routes/__tests__/brand-favicon.test.js)

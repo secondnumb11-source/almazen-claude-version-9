@@ -1,76 +1,13 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../AuthContext'
 import { ROLES } from '../lib/helpers'
 import { useSidebarResize } from './sidebar/useSidebarResize'
 import { useSidebarRailSettings, railCssVars } from '../hooks/useSidebarRailSettings'
 import { useLuxuryScrollbar } from '../hooks/useLuxuryScrollbar'
-
-const itemGroups = [
-  {
-    category: 'الرئيسية والعمليات',
-    icon: '⚡',
-    items: [
-      { k: 'home', label: 'الرئيسية', icon: '🏠', roles: 'all' },
-      { k: 'dash', label: 'إدارة الوحدات والحجوزات', icon: '🏢', roles: 'all' },
-      { k: 'customers', label: 'إدارة العملاء والمستأجرين', icon: '👥', roles: 'all' },
-      { k: 'ops', label: 'العمليات اليومية', icon: '🧰', roles: 'employee' },
-    ]
-  },
-  {
-    category: 'التشغيل والصيانة',
-    icon: '🔧',
-    items: [
-      { k: 'maintenance', label: 'إدارة الصيانة', icon: '🛠️', roles: 'all' },
-      { k: 'staff', label: 'إدارة الموظفين', icon: '🧑‍💼', roles: 'finance' },
-    ]
-  },
-  {
-    category: 'المالية والتقارير',
-    icon: '📊',
-    items: [
-      { k: 'reports', label: 'قسم المحاسبة والتقارير', icon: '📊', roles: 'finance' },
-      { k: 'settlements', label: 'سجل التسويات المحاسبية', icon: '📚', roles: 'finance' },
-      { k: 'audit', label: 'تقرير التدقيق المحاسبي', icon: '🧾', roles: 'finance' },
-      { k: 'assistant', label: 'المساعد الذكي AI', icon: '🤖', roles: 'finance' },
-      { k: 'center', label: 'مركز التقارير والمراقبة', icon: '🛰️', roles: 'finance' },
-    ]
-  },
-  {
-    category: 'الربط والتكاملات',
-    icon: '🌐',
-    items: [
-      { k: 'channels', label: 'ربط منصات الحجز (Booking/Airbnb)', icon: '🌐', roles: 'finance' },
-      { k: 'ejar', label: 'التكامل مع منصة إيجار', icon: '🏛️', roles: 'finance', soon: true },
-    ]
-  },
-  {
-    category: 'نظام الترشيح',
-    icon: '🎁',
-    items: [
-      { k: 'referral', label: 'الترشيح والمكافآت', icon: '🎁', roles: 'all' },
-      { k: 'referral-track', label: 'تتبّع حالة الترشيح', icon: '🚦', roles: 'all' }
-
-    ]
-  },
-  {
-    category: 'النظام والإعدادات',
-    icon: '⚙️',
-    items: [
-      { k: 'settings', label: 'الإعدادات', icon: '⚙️', roles: 'finance' }
-    ]
-  },
-  {
-    category: 'إدارة المنصة',
-    icon: '👑',
-    items: [
-      { k: 'superadmin', label: 'لوحة التحكم الشاملة', icon: '🛠️', roles: 'superadmin' },
-      { k: 'admin-referrals', label: 'إدارة الترشيحات', icon: '🎯', roles: 'superadmin' },
-      { k: 'activity-log', label: 'سجل نشاط المنصة', icon: '🗂️', roles: 'superadmin' }
-    ]
-  }
-
-
-]
+import { useSidebarPrefs, sidebarPrefsVars } from '../hooks/useSidebarPrefs'
+import { NAV_GROUPS, makeVisibility, applyPrefs } from '../lib/navTree'
+import SidebarSearch from './sidebar/SidebarSearch'
+import SidebarSettings from './sidebar/SidebarSettings'
 
 function pad(n) { return String(n).padStart(2, '0') }
 
@@ -135,30 +72,49 @@ export default function AppSidebar({ page, setPage, collapsed, onToggle }) {
   const isAccountant = profile?.role === 'accountant'
   const isEmployee = profile?.role === 'employee'
 
+  // تفضيلات اللوحة لكل مستخدم: العرض، حجم الخط، الترتيب، الإخفاء، الألوان
+  const {
+    prefs, save: savePrefs, reset: resetPrefs, toggleHidden, toggleFavorite, moveGroup,
+  } = useSidebarPrefs(session?.user?.id)
+
   const { asideRef, effectiveWidth, showFullContent, dragging, autoPreview, onResizerPointerDown } =
-    useSidebarResize({ collapsed })
+    useSidebarResize({
+      collapsed,
+      width: prefs.width,
+      onWidthCommit: (w) => savePrefs({ width: w }),
+    })
 
   // إعدادات مسطرة الحركة الطولية — محفوظة في قاعدة البيانات لكل مستخدم
   const { rail } = useSidebarRailSettings(session?.user?.id)
+
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  // قائمة منسدلة واحدة مفتوحة فقط في أي لحظة — كما طُلب صراحةً
+  const [openGroup, setOpenGroup] = useState(null)
 
   // When auto-preview kicks in we want to render full-width content even though the parent
   // still considers the sidebar "collapsed". This keeps the toggle button behaviour intact.
   const contentCollapsed = !showFullContent
 
   // السوبر أدمن يرى كل الأقسام (منها صفحة الاختبارات الذكية للنظام) حتى لو لم يطابق دوره الشرط
-  const isVisible = (i) =>
-    i.roles === 'all' ||
-    isSuperAdmin ||
-    (i.roles === 'finance' && canFinance) ||
-    (i.roles === 'owner' && isOwner) ||
-    (i.roles === 'accountant' && isAccountant) ||
-    (i.roles === 'employee' && isEmployee) ||
-    (i.roles === 'superadmin' && isSuperAdmin)
+  const roleFlags = { isSuperAdmin, canFinance, isOwner, isAccountant, isEmployee }
+  const isVisible = useMemo(() => makeVisibility(roleFlags),
+    [isSuperAdmin, canFinance, isOwner, isAccountant, isEmployee])
 
+  const visibleGroups = useMemo(() => applyPrefs(
+    NAV_GROUPS.map(g => ({ ...g, items: g.items.filter(isVisible) })).filter(g => g.items.length > 0),
+    prefs,
+  ), [isVisible, prefs])
 
-  const visibleGroups = itemGroups
-    .map(g => ({ ...g, items: g.items.filter(isVisible) }))
-    .filter(g => g.items.length > 0)
+  /* المجموعة التي تحوي الصفحة النشطة تُفتح تلقائياً عند التنقّل */
+  useEffect(() => {
+    const g = visibleGroups.find(x => x.accordion && x.items.some(i => i.k === page))
+    if (g) setOpenGroup(g.id)
+  }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const go = (k) => {
+    setPage(k)
+    if (window.innerWidth <= 768) onToggle()
+  }
 
   /* ---------------- مؤشر المسطرة: يتتبّع القسم النشط والمُحوَّم عليه ---------------- */
   const navRef = useRef(null)
@@ -215,7 +171,7 @@ export default function AppSidebar({ page, setPage, collapsed, onToggle }) {
         + (contentCollapsed ? ' collapsed' : '')
         + (autoPreview ? ' auto-preview' : '')
         + (dragging ? ' resizing' : '')}
-      style={{ width: `${effectiveWidth}px`, ...railCssVars(rail) }}
+      style={{ width: `${effectiveWidth}px`, ...railCssVars(rail), ...sidebarPrefsVars(prefs) }}
     >
       {/* Resizer handle — sits on the inner edge, invisible until hover */}
       <div className="sb-resizer" onPointerDown={onResizerPointerDown} title="اسحب لتغيير العرض">
@@ -245,6 +201,14 @@ export default function AppSidebar({ page, setPage, collapsed, onToggle }) {
           <span className={'sb-toggle-arrow' + (collapsed ? ' rot' : '')}>‹</span>
         </button>
       </div>
+
+      {/* مفتاح البحث — يبحث في كل الأقسام والصفحات وينقل مباشرةً */}
+      <SidebarSearch
+        isVisible={isVisible}
+        onPick={go}
+        collapsed={contentCollapsed}
+        onExpandRequest={() => { if (collapsed) onToggle() }}
+      />
 
       {/* Clock Widget */}
       <SidebarClock collapsed={contentCollapsed} />
@@ -299,47 +263,69 @@ export default function AppSidebar({ page, setPage, collapsed, onToggle }) {
           </span>
         </div>
 
-        {/* Categorized Menu Groups */}
-        {visibleGroups.map((group, idx) => (
-          <div key={idx} className="sb-group">
-            {!contentCollapsed && (
-              <div className="sb-group-header">
-                <span className="sb-group-icon">{group.icon}</span>
-                <span className="sb-group-title">{group.category}</span>
-                <span className="sb-group-line" />
-              </div>
-            )}
-            <div className="sb-group-items">
-              {group.items.map(it => {
-                const isActive = page === it.k;
-                return (
+        {/* Categorized Menu Groups — المجموعات المعلَّمة accordion تُعرض كقوائم منسدلة،
+            ولا تبقى غير واحدة مفتوحة في أي لحظة. */}
+        {visibleGroups.map((group) => {
+          const isAccordion = !!group.accordion && !contentCollapsed
+          const hasActive = group.items.some(i => i.k === page)
+          const expanded = !isAccordion || openGroup === group.id
+
+          return (
+            <div key={group.id} className={'sb-group' + (isAccordion ? ' sb-group-acc' : '') + (expanded ? ' open' : '')}>
+              {!contentCollapsed && (
+                isAccordion ? (
                   <button
-                    key={it.k}
-                    ref={el => { itemRefs.current[it.k] = el }}
-                    onMouseEnter={() => onItemEnter(it.k)}
-                    onFocus={() => onItemEnter(it.k)}
-                    className={'sb-item' + (isActive ? ' on' : '')}
-                    onClick={() => {
-                      setPage(it.k)
-                      if (window.innerWidth <= 768) onToggle()
-                    }}
-                    title={it.label}
+                    type="button"
+                    className={'sb-group-header sb-acc-btn' + (hasActive ? ' has-active' : '')}
+                    onClick={() => setOpenGroup(g => (g === group.id ? null : group.id))}
+                    aria-expanded={expanded}
+                    title={expanded ? 'طي القائمة' : 'فتح القائمة'}
                   >
-                    <span className="sb-ico-container">
-                      <span className="sb-ico">{it.icon}</span>
-                    </span>
-                    {!contentCollapsed && (
-                      <span className="sb-label">
-                        <span>{it.label}</span>
-                        {it.soon && <small className="sb-soon">قريباً</small>}
-                      </span>
-                    )}
+                    <span className="sb-group-icon">{group.icon}</span>
+                    <span className="sb-group-title">{group.category}</span>
+                    <span className="sb-acc-count">{group.items.length}</span>
+                    <span className={'sb-acc-arrow' + (expanded ? ' up' : '')}>⌄</span>
                   </button>
+                ) : (
+                  <div className="sb-group-header">
+                    <span className="sb-group-icon">{group.icon}</span>
+                    <span className="sb-group-title">{group.category}</span>
+                    <span className="sb-group-line" />
+                  </div>
                 )
-              })}
+              )}
+
+              {expanded && (
+                <div className="sb-group-items">
+                  {group.items.map(it => {
+                    const isActive = page === it.k
+                    return (
+                      <button
+                        key={it.k}
+                        ref={el => { itemRefs.current[it.k] = el }}
+                        onMouseEnter={() => onItemEnter(it.k)}
+                        onFocus={() => onItemEnter(it.k)}
+                        className={'sb-item' + (isActive ? ' on' : '')}
+                        onClick={() => go(it.k)}
+                        title={it.label}
+                      >
+                        <span className="sb-ico-container">
+                          <span className="sb-ico">{it.icon}</span>
+                        </span>
+                        {!contentCollapsed && (
+                          <span className="sb-label">
+                            <span>{it.label}</span>
+                            {it.soon && <small className="sb-soon">قريباً</small>}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          )
+        })}
       </nav>
 
       {/* Sidebar Footer User Info */}
@@ -356,10 +342,34 @@ export default function AppSidebar({ page, setPage, collapsed, onToggle }) {
             </div>
           </div>
         )}
-        <button className="sb-signout" onClick={signOut} title="تسجيل الخروج من الحساب">
-          {contentCollapsed ? '⎋' : <><span className="sb-signout-ico">⎋</span><span>تسجيل الخروج</span></>}
-        </button>
+        <div className="sb-foot-row">
+          <button
+            className="sb-gear"
+            onClick={() => setSettingsOpen(true)}
+            title="إعدادات اللوحة الجانبية — الترتيب والإخفاء والحجم والألوان"
+            aria-label="إعدادات اللوحة الجانبية"
+          >
+            <span className="sb-gear-ico">⚙️</span>
+            {!contentCollapsed && <span>إعدادات اللوحة</span>}
+          </button>
+          <button className="sb-signout" onClick={signOut} title="تسجيل الخروج من الحساب">
+            {contentCollapsed ? '⎋' : <><span className="sb-signout-ico">⎋</span><span>خروج</span></>}
+          </button>
+        </div>
       </div>
+
+      {settingsOpen && (
+        <SidebarSettings
+          prefs={prefs}
+          save={savePrefs}
+          reset={resetPrefs}
+          toggleHidden={toggleHidden}
+          toggleFavorite={toggleFavorite}
+          moveGroup={moveGroup}
+          roles={roleFlags}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
     </aside>
   )
 }
