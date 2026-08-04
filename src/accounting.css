@@ -461,16 +461,31 @@
   .sb-group-acc.open .sb-group-items { transition: none; animation: none; }
 }
 
-/* --------------------------- تذييل اللوحة --------------------------- */
-.sb-foot-row { display: flex; gap: 6px; }
+/* --------------------------- تذييل اللوحة ---------------------------
+   مضغوط عمداً: التذييل أداة مساعدة، وكان يلتهم مساحة تخص القوائم. */
+.app-sidebar .sb-foot { padding-top: 6px; }
+.sb-foot-row { display: flex; gap: 5px; }
 .sb-gear {
-  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-  padding: .5em .6em; border-radius: 10px; cursor: pointer;
-  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14);
-  color: rgba(232,238,247,.88); font-family: inherit; font-size: .76em; font-weight: 700;
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
+  padding: .32em .5em; border-radius: 8px; cursor: pointer; min-height: 28px;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+  color: rgba(232,238,247,.82); font-family: inherit; font-size: .66em; font-weight: 700;
+  white-space: nowrap;
 }
+.sb-gear-ico { font-size: .92em; }
 .sb-gear:hover { background: rgba(198,162,75,.24); border-color: rgba(198,162,75,.5); }
-.sb-foot-row .sb-signout { flex: 1; }
+.sb-foot-row .sb-signout {
+  flex: 1; min-height: 28px; padding: .32em .5em; border-radius: 8px;
+  font-size: .66em; font-weight: 700; white-space: nowrap;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+
+/* بطاقة المستخدم مضغوطة: الاسم والدور في سطرين نحيفين */
+.app-sidebar .sb-user { padding: .34em .5em; gap: 7px; margin-bottom: 6px; }
+.app-sidebar .sb-avatar { width: 26px; height: 26px; font-size: .78em; }
+.app-sidebar .sb-user-info b { font-size: .74em; line-height: 1.35; }
+.app-sidebar .sb-role-badge { font-size: .6em; padding: .04em .34em; line-height: 1.5; }
+.app-sidebar .sb-user-online { width: 7px; height: 7px; }
 
 /* --------------------- نافذة إعدادات اللوحة الجانبية --------------------- */
 .sbset-back {
@@ -566,3 +581,18 @@
   .acct-form { grid-template-columns: 1fr; }
   .acct-table { font-size: .74rem; }
 }
+
+/* تبويبات الحسابات الافتراضية داخل ميزان المراجعة */
+.tb-deftabs {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 10px;
+}
+.tb-deftab {
+  border: 1px solid var(--line, #E2E9F2); border-radius: 11px;
+  background: #fff; overflow: hidden;
+}
+.tb-deftab > b {
+  display: block; padding: .42em .7em; font-size: .78rem;
+  background: rgba(14,35,64,.06); border-bottom: 1px solid var(--line, #E2E9F2);
+}
+.tb-deftab .acct-table td { border-bottom: 1px solid rgba(226,233,242,.7); font-size: .74rem; }
+.tb-deftab .acct-table tr:last-child td { border-bottom: 0; }

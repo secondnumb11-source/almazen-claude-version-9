@@ -7,6 +7,7 @@ import { useLuxuryScrollbar } from '../hooks/useLuxuryScrollbar'
 import { useSidebarPrefs, sidebarPrefsVars } from '../hooks/useSidebarPrefs'
 import { NAV_GROUPS, makeVisibility, applyPrefs } from '../lib/navTree'
 import DataSearch from './DataSearch'
+import { prefetchPage, warmHeavyChunks } from '../lib/perfKit'
 import SidebarSettings from './sidebar/SidebarSettings'
 
 function pad(n) { return String(n).padStart(2, '0') }
@@ -88,6 +89,9 @@ export default function AppSidebar({ page, setPage, collapsed, onToggle, onOpenR
   const { rail } = useSidebarRailSettings(session?.user?.id)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // أثقل الحزم تُنزَّل في وقت الخمول بعد الإقلاع فلا ينتظرها المستخدم لاحقاً
+  useEffect(() => { warmHeavyChunks() }, [])
   // قائمة منسدلة واحدة مفتوحة فقط في أي لحظة — كما طُلب صراحةً
   const [openGroup, setOpenGroup] = useState(null)
 
@@ -153,6 +157,8 @@ export default function AppSidebar({ page, setPage, collapsed, onToggle, onOpenR
 
   const onItemEnter = (key) => {
     setHoverKey(key)
+    // تحميل حزمة القسم قبل النقر: أكبر سبب منفرد لبطء فتح الأقسام
+    prefetchPage(key)
     const m = measure(key)
     if (m) setGhost({ ...m, visible: true })
   }
@@ -283,7 +289,10 @@ export default function AppSidebar({ page, setPage, collapsed, onToggle, onOpenR
                   <button
                     type="button"
                     className={'sb-group-header sb-acc-btn' + (hasActive ? ' has-active' : '')}
-                    onClick={() => setOpenGroup(g => (g === group.id ? null : group.id))}
+                    onClick={() => {
+                      setOpenGroup(g => (g === group.id ? null : group.id))
+                      group.items.forEach(i => prefetchPage(i.k))
+                    }}
                     aria-expanded={expanded}
                     title={expanded ? 'طي القائمة' : 'فتح القائمة'}
                   >

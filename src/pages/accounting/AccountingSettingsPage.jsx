@@ -219,7 +219,7 @@ function PeriodForm({ value, busy, onSave, onCancel }) {
 
 const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
 
-const DEFAULT_ACCOUNT_FIELDS = [
+export const DEFAULT_ACCOUNT_FIELDS = [
   { key: 'vat_output_account_id', label: 'ضريبة القيمة المضافة المستحقة (مخرجات)' },
   { key: 'vat_input_account_id', label: 'ضريبة القيمة المضافة القابلة للخصم (مدخلات)' },
   { key: 'suspense_bank_account_id', label: 'الحساب البنكي المعلّق' },
@@ -228,6 +228,8 @@ const DEFAULT_ACCOUNT_FIELDS = [
   { key: 'deferred_expense_account_id', label: 'النفقة المؤجلة (مدفوعة مقدماً)' },
   { key: 'early_discount_gain_account_id', label: 'أرباح خصم الدفع المبكر' },
   { key: 'early_discount_loss_account_id', label: 'خسائر خصم الدفع المبكر' },
+  { key: 'invoice_discount_customer_account_id', label: 'خصومات بند الفاتورة — فواتير العملاء' },
+  { key: 'invoice_discount_vendor_account_id', label: 'خصومات بند الفاتورة — فاتورة المورد' },
   { key: 'withholding_tax_account_id', label: 'أساس ضريبة الاستقطاع (Withholding)' },
   { key: 'product_income_account_id', label: 'حساب الدخل للمنتج' },
   { key: 'product_expense_account_id', label: 'حساب النفقات للمنتج' },

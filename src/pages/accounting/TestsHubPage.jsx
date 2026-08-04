@@ -68,6 +68,25 @@ const SUITES = [
     },
   },
   {
+    id: 'perf', label: 'أداء النظام وسرعة فتح الأقسام', icon: '⚡',
+    desc: 'يقيس زمن فتح كل قسم فعلياً من متصفحات المستخدمين، ويفحص الفهارس والصفوف الميتة وإحصاءات المخطِّط وجداول البث اللحظي. زر الإصلاح ينشئ الفهارس الناقصة ويقلّم السجلات ويحدّث الإحصاءات على مستوى النظام كله.',
+    superOnly: true,
+    run: async () => {
+      const { data, error } = await supabase.rpc('ci_perf_checks')
+      if (error) throw new Error(error.message)
+      return (data || []).map(r => ({
+        code: r.o_suite, title: r.o_name, status: r.o_status,
+        detail: r.o_message, fixable: !!r.o_fix, fixKey: r.o_fix,
+      }))
+    },
+    fix: async () => {
+      const { data, error } = await supabase.rpc('perf_optimize_now', { p_dry: false })
+      if (error) throw new Error(error.message)
+      if (data && data.ok === false) throw new Error(data.error || 'تعذّر التسريع')
+      return data
+    },
+  },
+  {
     id: 'ota', label: 'سلامة طابور الربط مع منصات الحجز', icon: '🌐',
     desc: 'يتأكد أن كل نوع مهمة له منفّذ فعلي، وألا تتراكم مهام محكوم عليها بالفشل، وأن مُشغّل الطابور يعمل.',
     superOnly: true,

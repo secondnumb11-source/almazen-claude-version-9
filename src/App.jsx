@@ -50,6 +50,7 @@ import { FullPageLoading } from './components/Skeleton'
 import { ROLES } from './lib/helpers'
 import { runDailyNotificationChecks } from './lib/notifications'
 import DataSearch from './components/DataSearch'
+import { markPageStart, markPageEnd, prefetchPage } from './lib/perfKit'
 import { getOfflineQueue, syncOfflineQueue } from './lib/offlineManager'
 
 /** مفاتيح صفحات النظام المحاسبي — تُستخدم لبوابة صلاحية واحدة بدل شرط لكل صفحة. */
@@ -58,7 +59,7 @@ const ACCT_PAGES = new Set([
   'vat', 'deferred-rev', 'deferred-exp', 'acct-settings', 'reports-hub', 'tests-hub', 'odoo',
   'digital-docs', 'shomoos',
 ])
-const acctPage = (p) => ACCT_PAGES.has(p) || String(p).startsWith('services')
+const acctPage = (p) => ACCT_PAGES.has(p) || String(p).startsWith('services') || String(p).startsWith('srv:')
 
 /**
  * يحدّد القسم الذي يفتحه الإشعار عند النقر عليه.
@@ -93,6 +94,14 @@ function Shell() {
   const [collapsed, setCollapsed] = useState(false)
   const [dashEditMode, setDashEditMode] = useState(false)
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
+
+  // قياس زمن فتح كل قسم فعلياً — يُخزَّن في ci_perf_samples ويظهر في
+  // لوحة أداء السوبر أدمن كأرقام حقيقية بدل انطباعات عن البطء.
+  useEffect(() => {
+    markPageStart(page)
+    const t = requestAnimationFrame(() => requestAnimationFrame(() => markPageEnd(page)))
+    return () => cancelAnimationFrame(t)
+  }, [page])
 
   /**
    * ينقل إلى صفحة ويمرّر إليها السجل المطلوب فتحه من البحث.
@@ -500,6 +509,7 @@ function Shell() {
               {page === 'tb-check' && <TrialBalancePage mode="check" />}
               {page === 'vat' && <TaxCenterPage />}
               {page.startsWith('services') && <ServicesPage focusRecord={focusRecord} initialCategory={page.split(':')[1] || 'all'} />}
+              {page.startsWith('srv:') && <ServicesPage key={page} initialCode={page.split(':')[1]} />}
               {page === 'deferred-rev' && <DeferredPage kind="revenue" />}
               {page === 'deferred-exp' && <DeferredPage kind="expense" />}
               {page === 'acct-settings' && <AccountingSettingsPage />}
