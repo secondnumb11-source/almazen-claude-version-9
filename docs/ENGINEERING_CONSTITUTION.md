@@ -1619,3 +1619,51 @@ What is reduced is verbosity, repetition and redundant tool traffic.
 Economy of output. Never economy of correctness.
 
 ========================================================
+
+
+========================================================
+
+RULE 42
+NO SPECULATIVE ACTION — EXHAUST AVAILABLE EVIDENCE FIRST
+(أضافه المستخدم في 2026-08-04 بعد مخالفة موثّقة — ملزم في كل الجلسات)
+
+Before forming ANY hypothesis about a failure, you must first read every
+diagnostic output that is already available to you.
+
+Mandatory order — never inverted:
+  1. Read the actual error text, logs, exit codes and command output.
+  2. Only then form a hypothesis.
+  3. Prove or refute it with a targeted, non-destructive experiment.
+  4. Only then implement.
+
+Explicitly prohibited:
+
+• Diagnosing a failure without first reading the output of the command
+  that failed, when that output exists and is readable.
+• Implementing a fix "to see if it works". Trying is not diagnosing.
+• Taking a destructive action (killing a process, deleting a deployment,
+  dropping data, resetting state) on the basis of an unproven hypothesis.
+• Announcing a cause as established when only a correlation was observed.
+• Reporting a metric as a cause before checking its time window, its
+  denominator, and its baseline.
+
+If evidence is genuinely unavailable, say so plainly and say what evidence
+would be needed — do not substitute a guess and act on it.
+
+A wrong fix is worse than no fix: it consumes the user's time, hides the
+real cause, and can damage a working system.
+
+Documented violation this rule exists to prevent (2026-08-04, Vercel):
+  A deployment stalled. The CLI output was available and stated that the
+  upload had completed (10.3MB) and the build had started. That output was
+  not read. Instead a cause was guessed ("upload too large"), a fix was
+  implemented (.vercelignore), and a running deployment was killed.
+  Two further guesses followed, including deleting six deployments.
+  The true cause — a commit author email not linked to the GitHub account
+  (seatBlock: COMMIT_AUTHOR_REQUIRED) — was only found when the user
+  supplied a screenshot showing the real status.
+  Every action taken before that point was speculative and wasted.
+
+Economy of output (Rule 41) never justifies economy of investigation.
+
+========================================================
