@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+﻿import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../AuthContext'
 import { uploadFile } from '../lib/helpers'
@@ -8,6 +8,7 @@ import SidebarRailDesigner from '../components/SidebarRailDesigner'
 import SuperAdminAccounts from '../components/SuperAdminAccounts'
 import SystemDiagnostics from '../components/SystemDiagnostics'
 import CiSuitePanel from '../components/admin/CiSuitePanel'
+import PerfPanel from '../components/admin/PerfPanel'
 import UniversalCrud from '../components/admin/UniversalCrud'
 import BranchesManager from '../components/BranchesManager'
 import BranchFeatureAdmin from '../components/admin/BranchFeatureAdmin'
@@ -322,7 +323,12 @@ function SettingsPanel({ dashEditMode, setDashEditMode }) {
       {tab === 'superadmin' && <SuperAdminAccounts />}
       {tab === 'features' && isSuperAdmin && <BranchFeatureAdmin />}
       {tab === 'diagnostics' && isSuperAdmin && <SystemDiagnostics />}
-      {tab === 'ci' && isSuperAdmin && <CiSuitePanel />}
+      {tab === 'ci' && isSuperAdmin && (
+        <div style={{ display: 'grid', gap: 16 }}>
+          <PerfPanel />
+          <CiSuitePanel />
+        </div>
+      )}
 
       {tab === 'crud' && isSuperAdmin && (
         <div style={{ display: 'grid', gap: 16 }}>
