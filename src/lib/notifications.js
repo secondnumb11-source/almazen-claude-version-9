@@ -1,8 +1,58 @@
 import { supabase } from './supabase'
 
-export async function runDailyNotificationChecks(company_id) {
+/**
+ * حارس التشغيل اليومي.
+ *
+ * السبب: كانت هذه الدالة تُستدعى من useEffect تابع لكائن `profile` الذي تتغيّر
+ * هويته مع كل تحديث، وبلا أي حارس رغم اسمها «اليومية». وكل دورة تُطلق 8
+ * استعلامات وتُدرج إشعارات، وإدراج الإشعار يُطلق اشتراك Realtime الذي يُعيد
+ * التحميل — حلقة تغذية راجعة مكتملة.
+ *
+ * القياس على الإنتاج قبل الإصلاح: 821 طلب حجوزات في الساعة (تكرار كل 42 ثانية)
+ * و388 صف إشعارات — وهو سبب بطء تحميل الصفحات والتنقل.
+ *
+ * الحارس بطبقتين: قفل في الذاكرة يمنع التشغيل المتوازي داخل نفس التبويب،
+ * وطابع يوم في التخزين المحلي يمنع تكرار التشغيل خلال اليوم نفسه لكل منشأة.
+ */
+const RUN_STAMP_KEY = 'almazen.notifChecks.lastRun'
+const inFlight = new Set()
+
+function alreadyRanToday(company_id, dayStr) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(RUN_STAMP_KEY) || '{}')
+    return raw[company_id] === dayStr
+  } catch { return false }
+}
+
+function markRanToday(company_id, dayStr) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(RUN_STAMP_KEY) || '{}')
+    raw[company_id] = dayStr
+    localStorage.setItem(RUN_STAMP_KEY, JSON.stringify(raw))
+  } catch { /* التخزين قد يكون معطّلاً — القفل في الذاكرة يبقى فعّالاً */ }
+}
+
+export async function runDailyNotificationChecks(company_id, { force = false } = {}) {
   if (!company_id) return;
   const today = new Date();
+  const dayStr = today.toISOString().slice(0, 10);
+
+  if (!force) {
+    if (inFlight.has(company_id)) return;              // تشغيل جارٍ الآن
+    if (alreadyRanToday(company_id, dayStr)) return;   // شُغّل اليوم بالفعل
+  }
+  inFlight.add(company_id);
+  // يُعلَّم قبل البدء لا بعده: الفشل في المنتصف يجب ألا يُعيد فتح الحلقة
+  markRanToday(company_id, dayStr);
+
+  try {
+    return await runChecks(company_id, today);
+  } finally {
+    inFlight.delete(company_id);
+  }
+}
+
+async function runChecks(company_id, today) {
   
   // 1. Check contracts (bookings ending in 7, 3, 1 days)
   const daysToCheck = [7, 3, 1];

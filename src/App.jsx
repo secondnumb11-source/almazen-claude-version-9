@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, lazy, Suspense } from 'react'
+﻿import React, { useState, useEffect, useRef, lazy, Suspense } from 'react'
 
 // تحميل كسول للصفحات الثقيلة لتسريع الإقلاع والتنقل (Code Splitting)
 const Maintenance = lazy(() => import('./pages/Maintenance.jsx'))
@@ -131,8 +131,10 @@ function Shell() {
       setNotifs(data || [])
     }
     load()
-    
-    // Run daily notification generator
+
+    // مولّد الإشعارات اليومي — محكوم بحارس داخلي يمنع تكراره أكثر من مرة
+    // في اليوم لكل منشأة. كان يُستدعى مع كل تغيّر في كائن profile فيُنتج
+    // حلقة: إدراج إشعار ← حدث Realtime ← إعادة تحميل ← استدعاء جديد.
     runDailyNotificationChecks(profile.company_id);
 
     const ch = supabase.channel(`notifs:${profile.company_id}`)
@@ -149,7 +151,9 @@ function Shell() {
       })
       .subscribe()
     return () => supabase.removeChannel(ch)
-  }, [profile])
+    // معرّف المنشأة لا هوية الكائن: profile يُعاد بناؤه مع كل تحديث،
+    // فتُعاد كل الاشتراكات بلا داعٍ وتتكرر الاستعلامات.
+  }, [profile?.company_id])
 
   // URL query parameter listener (e.g. ?action=maintenance from QR code scan)
   useEffect(() => {
@@ -174,7 +178,7 @@ function Shell() {
     loadEvictions()
     const t = setInterval(loadEvictions, 10 * 60 * 1000)
     return () => clearInterval(t)
-  }, [profile])
+  }, [profile?.company_id])
 
   // بث الحضور الحيّ (بديل TeamViewer): كل مستخدم يبث الصفحة الحالية عبر Realtime Presence
   // ليطّلع المدير/المحاسب على مَن هو متصل الآن وعلى أي شاشة، دون الحاجة لسجلات في قاعدة البيانات.
@@ -196,7 +200,7 @@ function Shell() {
     })
     presenceRef.current = ch
     return () => { supabase.removeChannel(ch); presenceRef.current = null }
-  }, [profile])
+  }, [profile?.id, profile?.company_id])
 
   useEffect(() => {
     const ch = presenceRef.current
@@ -227,7 +231,7 @@ function Shell() {
       })
       .subscribe()
     return () => supabase.removeChannel(ch)
-  }, [profile, canFinance])
+  }, [profile?.id, profile?.company_id, canFinance])
 
   // رابط الترشيح (?ref=CODE) يفتح مباشرة على صفحة تسجيل عميل جديد
   const [showLogin, setShowLogin] = useState(() => {
