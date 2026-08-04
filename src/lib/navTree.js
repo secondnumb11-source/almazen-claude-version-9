@@ -100,6 +100,7 @@ export const NAV_GROUPS = [
     items: [
       { k: 'channels', label: 'ربط منصات الحجز (Booking/Airbnb)', icon: '🌐', roles: 'finance', keywords: 'بوكنق ايربنب قنوات' },
       { k: 'odoo', label: 'الربط مع أودو (Odoo)', icon: '🟣', roles: 'finance', keywords: 'أودو odoo ربط محاسبي خارجي' },
+      { k: 'shomoos', label: 'الربط مع شموس ووزارة السياحة', icon: '🛡️', roles: 'finance', keywords: 'شموس وزارة الداخلية السياحة نزلاء تسجيل رخصة' },
       { k: 'ejar', label: 'التكامل مع منصة إيجار', icon: '🏛️', roles: 'finance', soon: true, keywords: 'إيجار عقود' },
     ],
   },

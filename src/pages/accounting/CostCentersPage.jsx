@@ -18,7 +18,7 @@ const today = () => new Date().toISOString().slice(0, 10)
  * مراكز التكلفة — تحدّد المصروف تابع لأي إدارة وتحت أي بند ولأي فرع أو وحدة.
  * كل مركز يعرض تحميله الفعلي من القيود المرحّلة، لا رقماً تعريفياً فقط.
  */
-export default function CostCentersPage() {
+export default function CostCentersPage({ focusRecord }) {
   const { profile, company } = useAuth()
   const cid = profile?.company_id
   const { confirm, confirmNode } = useConfirm()
@@ -43,6 +43,13 @@ export default function CostCentersPage() {
   }, [cid])
 
   useEffect(() => { load() }, [load])
+
+  /* السجل القادم من البحث الشامل: تُرشَّح عليه الصفحة فور فتحها
+     بدل ترك المستخدم يبحث عنه مرة أخرى داخلها. */
+  useEffect(() => {
+    if (focusRecord?.title) setSearch(String(focusRecord.title).split(' — ')[0])
+  }, [focusRecord])
+
 
   useEffect(() => {
     if (!cid) return

@@ -23,7 +23,7 @@ const KINDS = {
  * ويُقيَّد هنا. المستند لا يُحذف أبداً — يُلغى مع بقاء أثره، لأن الحذف
  * يُفقد التدقيق قدرته على إثبات ما صدر.
  */
-export default function DigitalDocsPage() {
+export default function DigitalDocsPage({ focusRecord }) {
   const { profile, company } = useAuth()
   const cid = profile?.company_id
   const { confirm, confirmNode } = useConfirm()
@@ -57,6 +57,13 @@ export default function DigitalDocsPage() {
   }, [cid, kind, from, to, search])
 
   useEffect(() => { load() }, [load])
+
+  /* السجل القادم من البحث الشامل: تُرشَّح عليه الصفحة فور فتحها
+     بدل ترك المستخدم يبحث عنه مرة أخرى داخلها. */
+  useEffect(() => {
+    if (focusRecord?.title) setSearch(String(focusRecord.title).split(' — ')[0])
+  }, [focusRecord])
+
 
   const excelRows = useMemo(() => rows.map(r => ({
     'الرقم التسلسلي': r.o_serial, 'النوع': KINDS[r.o_kind] || r.o_kind,

@@ -16,7 +16,6 @@ import { FlaskConical, Play, Wrench, ShieldCheck } from 'lucide-react'
 const AccountingIntegrityTool = lazy(() => import('../../components/AccountingIntegrityTool'))
 const UnitStatusTransitionTests = lazy(() => import('../../components/UnitStatusTransitionTests'))
 const BranchSmartTests = lazy(() => import('../../components/BranchSmartTests'))
-const MultiTenantIsolationTest = lazy(() => import('../../components/MultiTenantIsolationTest'))
 const DeepMaintenanceReconciliation = lazy(() => import('../../components/DeepMaintenanceReconciliation'))
 const AutomatedMaintenanceReconciliationTool = lazy(() => import('../../components/AutomatedMaintenanceReconciliationTool'))
 const LedgerRegressionTests = lazy(() => import('../AccountingSmartTests').then(m => ({ default: m.LedgerRegressionTests })))
@@ -35,7 +34,9 @@ const COMPONENT_SUITES = [
   { id: 'c-deep', label: 'المطابقة العميقة للصيانة', icon: '🔬', C: DeepMaintenanceReconciliation },
   { id: 'c-unit', label: 'انتقالات حالة الوحدة', icon: '🏢', C: UnitStatusTransitionTests, superOnly: true },
   { id: 'c-branch', label: 'اختبارات الفروع الذكية', icon: '🏬', C: BranchSmartTests, superOnly: true },
-  { id: 'c-iso', label: 'عزل المنشآت متعددة المستأجرين', icon: '🔐', C: MultiTenantIsolationTest, superOnly: true },
+  // نُقل اختبار عزل المنشآت إلى «لوحة التحكم الشاملة» في حسابات السوبر أدمن
+  // حصراً — فهو يفحص الحدود بين المنشآت، ومكانه الطبيعي إدارة المنصة لا
+  // مركز اختبارات المحاسبة الذي يخص منشأة واحدة.
 ]
 
 const SUITES = [

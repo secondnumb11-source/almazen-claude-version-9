@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, lazy, Suspense } from 'react'
+﻿import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 
 // تحميل كسول للصفحات الثقيلة لتسريع الإقلاع والتنقل (Code Splitting)
 const Maintenance = lazy(() => import('./pages/Maintenance.jsx'))
@@ -28,6 +28,7 @@ const ReportsHubPage = lazy(() => import('./pages/accounting/ReportsHubPage'))
 const TestsHubPage = lazy(() => import('./pages/accounting/TestsHubPage'))
 const OdooPage = lazy(() => import('./pages/accounting/OdooPage'))
 const DigitalDocsPage = lazy(() => import('./pages/accounting/DigitalDocsPage'))
+const ShomoosPage = lazy(() => import('./pages/accounting/ShomoosPage'))
 import { AuthProvider, useAuth } from './AuthContext'
 import { supabase, hasSupabaseConfig } from './lib/supabase'
 import Login from './pages/Login'
@@ -48,14 +49,14 @@ import TrialExpired from './pages/TrialExpired'
 import { FullPageLoading } from './components/Skeleton'
 import { ROLES } from './lib/helpers'
 import { runDailyNotificationChecks } from './lib/notifications'
-import GlobalSearch from './components/GlobalSearch'
+import DataSearch from './components/DataSearch'
 import { getOfflineQueue, syncOfflineQueue } from './lib/offlineManager'
 
 /** مفاتيح صفحات النظام المحاسبي — تُستخدم لبوابة صلاحية واحدة بدل شرط لكل صفحة. */
 const ACCT_PAGES = new Set([
   'je-new', 'je-list', 'je-report', 'gl', 'coa', 'cost-centers', 'tb', 'tb-check',
   'vat', 'deferred-rev', 'deferred-exp', 'acct-settings', 'reports-hub', 'tests-hub', 'odoo',
-  'digital-docs',
+  'digital-docs', 'shomoos',
 ])
 const acctPage = (p) => ACCT_PAGES.has(p) || String(p).startsWith('services')
 
@@ -84,12 +85,32 @@ function Shell() {
   const [openEntryId, setOpenEntryId] = useState(undefined)
   // صلاحية دخول النظام المحاسبي — نفس صلاحية بقية الشاشات المالية
   const canAcct = canFinance || profile?.role === 'accountant'
+  // السجل الذي طلب المستخدم فتحه من البحث — تقرؤه الصفحة الهدف وتُبرزه
+  const [focusRecord, setFocusRecord] = useState(null)
   const [notifs, setNotifs] = useState([])
   const [evictionAlerts, setEvictionAlerts] = useState([])
   const [drawer, setDrawer] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const [dashEditMode, setDashEditMode] = useState(false)
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
+
+  /**
+   * ينقل إلى صفحة ويمرّر إليها السجل المطلوب فتحه من البحث.
+   * القيد يُفتح مباشرةً في محرّره؛ وبقية الصفحات تستقبل السجل عبر
+   * focusRecord فترشّح عليه بدل ترك المستخدم يبحث من جديد داخلها.
+   */
+  const openRecord = useCallback((targetPage, record) => {
+    if (!targetPage) return
+    if (record?.id && (targetPage === 'je-list' || targetPage === 'je-new')) {
+      setOpenEntryId(record.id)
+      setPage('je-list')
+    } else {
+      setOpenEntryId(undefined)
+      setPage(targetPage)
+    }
+    setFocusRecord(record || null)
+    if (window.innerWidth <= 768) setCollapsed(true)
+  }, [])
 
   const [pendingSyncCount, setPendingSyncCount] = useState(0)
   const [isSyncing, setIsSyncing] = useState(false)
@@ -327,9 +348,10 @@ function Shell() {
         page={page} 
         setPage={setPage} 
         collapsed={collapsed} 
-        onToggle={() => setCollapsed(c => !c)} 
-        dashEditMode={dashEditMode} 
-        setDashEditMode={setDashEditMode} 
+        onToggle={() => setCollapsed(c => !c)}
+        onOpenRecord={openRecord}
+        dashEditMode={dashEditMode}
+        setDashEditMode={setDashEditMode}
       />
       {!collapsed && <div className="sb-mobile-backdrop" onClick={() => setCollapsed(true)} />}
 
@@ -368,7 +390,7 @@ function Shell() {
           </div>
           
           <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            <GlobalSearch setPage={setPage} />
+            <DataSearch variant="header" onOpen={openRecord} />
           </div>
 
           <div className="hdr-actions">
@@ -472,19 +494,20 @@ function Shell() {
               {page === 'je-list' && <JournalListPage key={openEntryId || 'list'} initialEntryId={openEntryId} />}
               {page === 'je-report' && <JournalListPage mode="report" />}
               {page === 'gl' && <GeneralLedgerPage onOpenEntry={(id) => { setOpenEntryId(id); setPage('je-list') }} />}
-              {page === 'coa' && <ChartOfAccountsPage />}
-              {page === 'cost-centers' && <CostCentersPage />}
+              {page === 'coa' && <ChartOfAccountsPage focusRecord={focusRecord} />}
+              {page === 'cost-centers' && <CostCentersPage focusRecord={focusRecord} />}
               {page === 'tb' && <TrialBalancePage mode="full" />}
               {page === 'tb-check' && <TrialBalancePage mode="check" />}
               {page === 'vat' && <TaxCenterPage />}
-              {page.startsWith('services') && <ServicesPage initialCategory={page.split(':')[1] || 'all'} />}
+              {page.startsWith('services') && <ServicesPage focusRecord={focusRecord} initialCategory={page.split(':')[1] || 'all'} />}
               {page === 'deferred-rev' && <DeferredPage kind="revenue" />}
               {page === 'deferred-exp' && <DeferredPage kind="expense" />}
               {page === 'acct-settings' && <AccountingSettingsPage />}
               {page === 'reports-hub' && <ReportsHubPage />}
-              {page === 'digital-docs' && <DigitalDocsPage />}
+              {page === 'digital-docs' && <DigitalDocsPage focusRecord={focusRecord} />}
               {page === 'tests-hub' && <TestsHubPage />}
               {page === 'odoo' && <OdooPage />}
+              {page === 'shomoos' && <ShomoosPage />}
             </>
           )}
 

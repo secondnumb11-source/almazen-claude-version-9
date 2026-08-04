@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../AuthContext';
 import IsolationMonitorAdmin from './admin/IsolationMonitorAdmin';
+
+const MultiTenantIsolationTest = lazy(() => import('./MultiTenantIsolationTest'));
 
 /** تحويل تاريخ ISO إلى صيغة حقل <input type="date"> */
 const toInputDate = (iso) => {
@@ -274,6 +276,12 @@ export default function SuperAdminAccounts() {
 
       {/* لوحة مراقب عزل الحسابات — Super Admin فقط */}
       <IsolationMonitorAdmin />
+
+      {/* اختبار عزل المنشآت — نُقل إلى هنا من مركز اختبارات المحاسبة،
+          لأنه يفحص الحدود بين المنشآت فمكانه إدارة المنصة لا صفحة منشأة واحدة. */}
+      <Suspense fallback={<div className="card" style={{ padding: 18 }}>جارٍ تحميل اختبار العزل…</div>}>
+        <MultiTenantIsolationTest />
+      </Suspense>
     </div>
   );
 }

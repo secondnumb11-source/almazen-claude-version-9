@@ -285,6 +285,52 @@
 }
 .sb-search-mini:hover { background: rgba(198,162,75,.25); }
 
+/* ===================== البحث الموحّد في أعلى الصفحة ===================== */
+.ds-header { position: relative; flex: 1; max-width: 420px; min-width: 180px; }
+.ds-header-box {
+  display: flex; align-items: center; gap: 7px;
+  padding: .34em .7em; border-radius: 10px; min-height: 34px;
+  background: var(--card, #fff); border: 1px solid var(--line, #E2E9F2);
+  color: var(--ink, #0E2340); transition: border-color .2s, box-shadow .2s;
+}
+.ds-header-box:focus-within {
+  border-color: #C6A24B; box-shadow: 0 0 0 3px rgba(198,162,75,.16);
+}
+.ds-header-box > svg { flex: none; opacity: .55; }
+.ds-header-box input {
+  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
+  font-family: inherit; font-size: .82rem; color: inherit;
+}
+.ds-header-box input::placeholder { color: var(--muted, #94A3B8); }
+.ds-header .sb-search-kbd { background: #EEF2F7; border-color: #DDE5EF; color: #64748B; }
+.ds-header .sb-search-x { color: var(--muted, #64748B); }
+
+.ds-res {
+  position: absolute; inset-inline: 0; top: calc(100% + 5px); z-index: 1300;
+  background: var(--card, #fff); border: 1px solid var(--line, #E2E9F2);
+  border-radius: 13px; box-shadow: 0 18px 44px rgba(8,18,34,.2);
+  overflow: hidden; max-height: 60vh; overflow-y: auto;
+}
+.ds-res .sb-search-item { color: var(--ink, #0E2340); border-bottom-color: var(--line, #EDF1F7); }
+.ds-res .sb-search-item.on { background: rgba(198,162,75,.14); }
+.ds-res .sb-search-empty { color: var(--muted, #64748B); }
+
+.ds-group-lbl {
+  padding: .34em .75em; font-size: .66rem; font-weight: 800;
+  color: var(--muted, #64748B); background: rgba(14,35,64,.05);
+  border-bottom: 1px solid var(--line, #EDF1F7);
+}
+.sb-search-res .ds-group-lbl {
+  color: rgba(232,238,247,.55); background: rgba(255,255,255,.06);
+  border-bottom-color: rgba(255,255,255,.08);
+}
+.ds-kind {
+  flex: none; font-size: .62rem; font-weight: 800; padding: .1em .45em;
+  border-radius: 5px; background: rgba(198,162,75,.2); color: #8A6B1E;
+}
+.sb-search-res .ds-kind { background: rgba(198,162,75,.26); color: #F2DFA8; }
+.sb-search-item .sb-search-txt small { line-height: 1.5; }
+
 .sb-search-res {
   position: absolute; inset-inline: 10px; top: calc(100% - 4px); z-index: 60;
   background: #12294A; border: 1px solid rgba(198,162,75,.4); border-radius: 12px;

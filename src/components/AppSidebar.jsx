@@ -6,7 +6,7 @@ import { useSidebarRailSettings, railCssVars } from '../hooks/useSidebarRailSett
 import { useLuxuryScrollbar } from '../hooks/useLuxuryScrollbar'
 import { useSidebarPrefs, sidebarPrefsVars } from '../hooks/useSidebarPrefs'
 import { NAV_GROUPS, makeVisibility, applyPrefs } from '../lib/navTree'
-import SidebarSearch from './sidebar/SidebarSearch'
+import DataSearch from './DataSearch'
 import SidebarSettings from './sidebar/SidebarSettings'
 
 function pad(n) { return String(n).padStart(2, '0') }
@@ -67,7 +67,7 @@ function SidebarClock({ collapsed }) {
   )
 }
 
-export default function AppSidebar({ page, setPage, collapsed, onToggle }) {
+export default function AppSidebar({ page, setPage, collapsed, onToggle, onOpenRecord }) {
   const { profile, company, session, isOwner, canFinance, isSuperAdmin, signOut } = useAuth()
   const isAccountant = profile?.role === 'accountant'
   const isEmployee = profile?.role === 'employee'
@@ -202,10 +202,10 @@ export default function AppSidebar({ page, setPage, collapsed, onToggle }) {
         </button>
       </div>
 
-      {/* مفتاح البحث — يبحث في كل الأقسام والصفحات وينقل مباشرةً */}
-      <SidebarSearch
-        isVisible={isVisible}
-        onPick={go}
+      {/* البحث — في أقسام النظام وفي بياناته الفعلية معاً */}
+      <DataSearch
+        variant="sidebar"
+        onOpen={(page, record) => onOpenRecord ? onOpenRecord(page, record) : go(page)}
         collapsed={contentCollapsed}
         onExpandRequest={() => { if (collapsed) onToggle() }}
       />

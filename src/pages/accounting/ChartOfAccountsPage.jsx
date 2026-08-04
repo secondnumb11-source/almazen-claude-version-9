@@ -14,7 +14,7 @@ import { Network, Plus, Pencil, Trash2, ChevronDown, ChevronLeft } from 'lucide-
  * شجرة الحسابات — أصل وفروع لجميع الأقسام والإدارات والفروع.
  * العرض شجري قابل للطي حتى لا تزدحم الصفحة بمئات الحسابات دفعة واحدة.
  */
-export default function ChartOfAccountsPage() {
+export default function ChartOfAccountsPage({ focusRecord }) {
   const { profile, company } = useAuth()
   const cid = profile?.company_id
   const { confirm, confirmNode } = useConfirm()
@@ -36,6 +36,13 @@ export default function ChartOfAccountsPage() {
   }, [cid])
 
   useEffect(() => { load() }, [load])
+
+  /* السجل القادم من البحث الشامل: تُرشَّح عليه الصفحة فور فتحها
+     بدل ترك المستخدم يبحث عنه مرة أخرى داخلها. */
+  useEffect(() => {
+    if (focusRecord?.title) setSearch(String(focusRecord.title).split(' — ')[0])
+  }, [focusRecord])
+
 
   const flat = useMemo(() => flattenTree(buildAccountTree(rows)), [rows])
 

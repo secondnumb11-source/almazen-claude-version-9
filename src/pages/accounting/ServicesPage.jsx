@@ -14,7 +14,7 @@ import { Boxes, Plus, Pencil, Trash2 } from 'lucide-react'
  * كتالوج الخدمات — كل بند مرتبط بحساب حقيقي في شجرة الحسابات
  * ورمز ضريبي، فينعكس أثره في الدفاتر عند استخدامه لا في الاسم فقط.
  */
-export default function ServicesPage({ initialCategory }) {
+export default function ServicesPage({ initialCategory, focusRecord }) {
   const { profile, company } = useAuth()
   const cid = profile?.company_id
   const { confirm, confirmNode } = useConfirm()
@@ -40,6 +40,13 @@ export default function ServicesPage({ initialCategory }) {
   }, [cid])
 
   useEffect(() => { load() }, [load])
+
+  /* السجل القادم من البحث الشامل: تُرشَّح عليه الصفحة فور فتحها
+     بدل ترك المستخدم يبحث عنه مرة أخرى داخلها. */
+  useEffect(() => {
+    if (focusRecord?.title) setSearch(String(focusRecord.title).split(' — ')[0])
+  }, [focusRecord])
+
   useEffect(() => {
     if (!cid) return
     fetchAccounts(cid).then(a => setAccounts(a.filter(x => !x.is_group))).catch(() => {})
