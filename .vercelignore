@@ -1,0 +1,23 @@
+# استبعاد ما لا يُرفع إلى Vercel.
+# بدون هذا الملف حاول الـ CLI رفع 37,034 ملفاً (326 MB) من node_modules
+# و .output فتعثّر الرفع وبقي النشر بحالة UNKNOWN بلا أي بناء.
+# Vercel يثبّت التبعيات ويبني على الخادم، فلا حاجة لرفع أي منها.
+
+node_modules
+.output
+dist
+.vinxi
+.tanstack
+.git
+.github
+.claude
+
+# مخرجات ومؤقتات محلية
+*.log
+.DS_Store
+coverage
+
+# الأسرار المحلية (مستبعدة أصلاً في .gitignore — تأكيد مزدوج)
+.env
+.env.*
+!.env.example
