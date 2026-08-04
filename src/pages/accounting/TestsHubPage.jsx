@@ -19,9 +19,17 @@ const BranchSmartTests = lazy(() => import('../../components/BranchSmartTests'))
 const MultiTenantIsolationTest = lazy(() => import('../../components/MultiTenantIsolationTest'))
 const DeepMaintenanceReconciliation = lazy(() => import('../../components/DeepMaintenanceReconciliation'))
 const AutomatedMaintenanceReconciliationTool = lazy(() => import('../../components/AutomatedMaintenanceReconciliationTool'))
+const LedgerRegressionTests = lazy(() => import('../AccountingSmartTests').then(m => ({ default: m.LedgerRegressionTests })))
+const ChartOfAccountsTests = lazy(() => import('../AccountingSmartTests').then(m => ({ default: m.ChartOfAccountsTests })))
+const JournalEntriesTests = lazy(() => import('../AccountingSmartTests').then(m => ({ default: m.JournalEntriesTests })))
+const FullRegressionSuite = lazy(() => import('../AccountingSmartTests').then(m => ({ default: m.FullRegressionSuite })))
 
 /** حزم مبنية كمكوّنات مستقلة — تُعرض كما هي داخل نفس القائمة المنسدلة. */
 const COMPONENT_SUITES = [
+  { id: 'c-engine', label: 'اختبارات محرك التصفية', icon: '⚖️', C: LedgerRegressionTests },
+  { id: 'c-chart', label: 'اختبارات شجرة الحسابات', icon: '🌳', C: ChartOfAccountsTests },
+  { id: 'c-journals', label: 'اختبارات القيود المُرحَّلة', icon: '📚', C: JournalEntriesTests },
+  { id: 'c-regression', label: 'اختبار الانحدار الشامل', icon: '🚀', C: FullRegressionSuite },
   { id: 'c-integrity', label: 'سلامة القيود والأرصدة (الأداة التفصيلية)', icon: '🧮', C: AccountingIntegrityTool },
   { id: 'c-maint', label: 'مطابقة الصيانة الآلية', icon: '🛠️', C: AutomatedMaintenanceReconciliationTool },
   { id: 'c-deep', label: 'المطابقة العميقة للصيانة', icon: '🔬', C: DeepMaintenanceReconciliation },
@@ -53,6 +61,25 @@ const SUITES = [
     fix: async (cid, code, row) => {
       if (!row?.fixKey) throw new Error('لا يوجد إصلاح آلي لهذا الفحص')
       // مفاتيح الإصلاح في ci_stab_checks هي نفسها check_id في ci_fix_catalog
+      const { data, error } = await supabase.rpc('ci_apply_fix_to_all_users', { _check_id: row.fixKey })
+      if (error) throw new Error(error.message)
+      return data
+    },
+  },
+  {
+    id: 'ota', label: 'سلامة طابور الربط مع منصات الحجز', icon: '🌐',
+    desc: 'يتأكد أن كل نوع مهمة له منفّذ فعلي، وألا تتراكم مهام محكوم عليها بالفشل، وأن مُشغّل الطابور يعمل.',
+    superOnly: true,
+    run: async () => {
+      const { data, error } = await supabase.rpc('ci_ota_checks')
+      if (error) throw new Error(error.message)
+      return (data || []).map(r => ({
+        code: r.o_suite, title: r.o_name, status: r.o_status,
+        detail: r.o_message, fixable: !!r.o_fix, fixKey: r.o_fix,
+      }))
+    },
+    fix: async (cid, code, row) => {
+      if (!row?.fixKey) throw new Error('لا يوجد إصلاح آلي — راجع الرسالة')
       const { data, error } = await supabase.rpc('ci_apply_fix_to_all_users', { _check_id: row.fixKey })
       if (error) throw new Error(error.message)
       return data
@@ -125,7 +152,7 @@ export default function TestsHubPage() {
           <ExcelButton filename={`نتائج-${suite?.label}.xlsx`} sheet="نتائج الفحص"
             rows={rows.map(r => ({ 'الرمز': r.code, 'الفحص': r.title, 'النتيجة': r.status === 'pass' ? 'سليم' : 'خطأ', 'التفصيل': r.detail || '' }))}
             onError={setErr} />
-          <PrintButton targetId="tests-print" title={`${suite?.label} — ${company?.name || ''}`} />
+          <PrintButton docKind="report" targetId="tests-print" title={`${suite?.label} — ${company?.name || ''}`} />
         </>
       ) : null}
     >

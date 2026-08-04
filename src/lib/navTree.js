@@ -75,6 +75,7 @@ export const NAV_GROUPS = [
     id: 'acct-reports', category: 'التقارير المحاسبية', icon: '📊', accordion: true, roles: 'finance',
     items: [
       { k: 'reports-hub', label: 'مركز التقارير المحاسبية', icon: '📊', roles: 'finance', keywords: 'تقارير قائمة الدخل مركز مالي تدفقات' },
+      { k: 'digital-docs', label: 'سجل المستندات الرقمية', icon: '🔏', roles: 'finance', keywords: 'رقمنة مستند ختم تسلسلي رمز تحقق بصمة' },
       { k: 'reports', label: 'المحاسبة والتقارير التشغيلية', icon: '💼', roles: 'finance', keywords: 'محاسبة تقارير مدفوعات' },
       { k: 'settlements', label: 'سجل التسويات المحاسبية', icon: '📚', roles: 'finance', keywords: 'تسوية تصفية حساب' },
       { k: 'audit', label: 'تقرير التدقيق المحاسبي', icon: '🔍', roles: 'finance', keywords: 'تدقيق مراجعة' },

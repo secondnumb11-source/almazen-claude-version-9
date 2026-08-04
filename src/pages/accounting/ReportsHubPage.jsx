@@ -127,7 +127,7 @@ export default function ReportsHubPage() {
         <>
           <ExcelButton filename={`${report?.label || 'تقرير'}.xlsx`} sheet={report?.label || 'تقرير'}
             rows={excelRows} numericCols={report?.num || []} onError={setErr} />
-          <PrintButton targetId="rpt-print" title={`${report?.label} — ${company?.name || ''}`} />
+          <PrintButton docKind="report" targetId="rpt-print" title={`${report?.label} — ${company?.name || ''}`} />
         </>
       ) : null}
     >

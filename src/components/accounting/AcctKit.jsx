@@ -1,6 +1,12 @@
 import React, { useState } from 'react'
 import { Printer, FileSpreadsheet, RefreshCw, Search } from 'lucide-react'
 import { exportRows } from '../../lib/accountingApi'
+import { supabase } from '../../lib/supabase'
+
+/** تهريب HTML — العنوان والمحتوى يأتيان من بيانات المستخدم. */
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+))
 
 /*
   مكوّنات مشتركة لكل صفحات المحاسبة.
@@ -57,15 +63,36 @@ export function ExcelButton({ filename, sheet, rows, numericCols, disabled, onEr
   )
 }
 
-/** زر طباعة — يطبع منطقة محددة فقط في نافذة معزولة. */
-export function PrintButton({ targetId, title, disabled }) {
+/**
+ * زر طباعة — يطبع منطقة محددة فقط في نافذة معزولة، ويختم المخرَج رقمياً.
+ * الختم ليس زينة: رقم تسلسلي وبصمة محتوى ورمز تحقق يجعل الورقة المطبوعة
+ * قابلة للإثبات أمام طرف ثالث. إن تعذّر الختم تُطبع الورقة بلا ختم —
+ * الطباعة لا يجوز أن تفشل بسبب خدمة مساعدة.
+ */
+export function PrintButton({ targetId, title, disabled, docKind = 'report', entityId = null, total = null, docDate = null }) {
+  const [busy, setBusy] = useState(false)
   return (
     <button
-      type="button" className="btn btn-ghost btn-sm" disabled={disabled}
-      title="طباعة التقرير المعروض"
-      onClick={() => printRegion(targetId, title)}
+      type="button" className="btn btn-ghost btn-sm" disabled={disabled || busy}
+      title="طباعة المستند مختوماً برقم تسلسلي ورمز تحقق"
+      onClick={async () => {
+        setBusy(true)
+        let stamp = null
+        try {
+          const el = document.getElementById(targetId)
+          const payload = (el?.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 20000)
+          const { data } = await supabase.rpc('doc_stamp', {
+            p_kind: docKind, p_title: title || null, p_payload: payload,
+            p_table: null, p_id: entityId, p_total: total, p_date: docDate, p_meta: {},
+          })
+          stamp = data || null
+        } catch {
+          /* الختم خدمة مساعدة — تعذّره لا يمنع الطباعة */
+        } finally { setBusy(false) }
+        printRegion(targetId, title, stamp)
+      }}
     >
-      <Printer size={14} /> طباعة
+      <Printer size={14} /> {busy ? 'جارٍ الختم…' : 'طباعة'}
     </button>
   )
 }
@@ -83,13 +110,27 @@ export function RefreshButton({ onClick, busy }) {
  * سبب النافذة المستقلة: إخفاء بقية الصفحة عبر @media print كان يطبع
  * القائمة الجانبية وأي نافذة مفتوحة مع التقرير.
  */
-export function printRegion(targetId, title = 'تقرير محاسبي') {
+export function printRegion(targetId, title = 'تقرير محاسبي', stamp = null) {
   const el = document.getElementById(targetId)
   if (!el) return
   const w = window.open('', '_blank', 'width=1100,height=800')
   if (!w) return
+  const stampHtml = stamp?.serial ? `
+<div class="dstamp">
+  <div class="dstamp-l">
+    <b>مستند موثّق رقمياً</b>
+    <span>الرقم التسلسلي: <code>${esc(stamp.serial)}</code></span>
+    <span>رمز التحقق: <code class="big">${esc(stamp.code || '')}</code></span>
+  </div>
+  <div class="dstamp-r">
+    <span>بصمة المحتوى (SHA-256):</span>
+    <code class="hash">${esc((stamp.hash || '').slice(0, 32))}…</code>
+    <span>للتحقق: سجل المستندات الرقمية ← «تحقق من مستند» ← أدخل رمز التحقق</span>
+  </div>
+</div>` : ''
+
   w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
-<title>${title}</title>
+<title>${esc(title)}</title>
 <style>
  *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
  body{font-family:'Tajawal','Cairo',system-ui,sans-serif;margin:0;padding:22px;color:#0E2340;font-size:13px}
@@ -103,10 +144,20 @@ export function printRegion(targetId, title = 'تقرير محاسبي') {
  .num{text-align:left;font-variant-numeric:tabular-nums}
  .acct-lvl-pad{display:inline-block}
  button,.no-print{display:none!important}
+ .only-print{display:inline!important}
+ .dstamp{margin-top:20px;padding:10px 13px;border:1.5px dashed #C6A24B;border-radius:9px;
+   background:#FEFBF2;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;font-size:11px}
+ .dstamp-l,.dstamp-r{display:flex;flex-direction:column;gap:3px}
+ .dstamp b{font-size:12px;color:#7A5B12}
+ .dstamp code{font-family:ui-monospace,Consolas,monospace;direction:ltr;unicode-bidi:embed}
+ .dstamp code.big{font-size:15px;font-weight:800;letter-spacing:1.5px;color:#0E2340}
+ .dstamp code.hash{font-size:10px;color:#64748B;word-break:break-all}
+ .dstamp-r{text-align:left;align-items:flex-start}
 </style></head><body>
-<h1>${title}</h1>
-<div class="meta">${document.title || 'منصة المازن'} — طُبع في ${new Date().toLocaleString('ar-SA')}</div>
+<h1>${esc(title)}</h1>
+<div class="meta">${esc(document.title || 'منصة المازن')} — طُبع في ${new Date().toLocaleString('ar-SA')}</div>
 ${el.innerHTML}
+${stampHtml}
 </body></html>`)
   w.document.close()
   w.focus()

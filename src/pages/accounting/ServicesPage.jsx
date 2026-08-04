@@ -95,7 +95,7 @@ export default function ServicesPage({ initialCategory }) {
           <RefreshButton onClick={load} busy={busy} />
           <ExcelButton filename="الخدمات.xlsx" sheet="الخدمات" rows={excelRows}
             numericCols={['السعر قبل الضريبة', 'قيمة الضريبة', 'السعر شامل الضريبة', 'التكلفة']} onError={setErr} />
-          <PrintButton targetId="srv-print" title={`الخدمات — ${company?.name || ''}`} />
+          <PrintButton docKind="report" targetId="srv-print" title={`الخدمات — ${company?.name || ''}`} />
         </>
       }
     >

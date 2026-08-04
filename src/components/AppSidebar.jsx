@@ -271,7 +271,13 @@ export default function AppSidebar({ page, setPage, collapsed, onToggle }) {
           const expanded = !isAccordion || openGroup === group.id
 
           return (
-            <div key={group.id} className={'sb-group' + (isAccordion ? ' sb-group-acc' : '') + (expanded ? ' open' : '')}>
+            <div
+              key={group.id}
+              className={'sb-group'
+                + (isAccordion ? ' sb-group-acc' : '')
+                + (isAccordion && expanded ? ' open' : '')
+                + (hasActive ? ' has-active' : '')}
+            >
               {!contentCollapsed && (
                 isAccordion ? (
                   <button
@@ -281,10 +287,16 @@ export default function AppSidebar({ page, setPage, collapsed, onToggle }) {
                     aria-expanded={expanded}
                     title={expanded ? 'طي القائمة' : 'فتح القائمة'}
                   >
+                    <span className="sb-acc-edge" aria-hidden="true" />
                     <span className="sb-group-icon">{group.icon}</span>
                     <span className="sb-group-title">{group.category}</span>
                     <span className="sb-acc-count">{group.items.length}</span>
-                    <span className={'sb-acc-arrow' + (expanded ? ' up' : '')}>⌄</span>
+                    <span className="sb-acc-arrow" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none"
+                        stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="6 15 12 9 18 15" />
+                      </svg>
+                    </span>
                   </button>
                 ) : (
                   <div className="sb-group-header">

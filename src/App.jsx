@@ -27,6 +27,7 @@ const AccountingSettingsPage = lazy(() => import('./pages/accounting/AccountingS
 const ReportsHubPage = lazy(() => import('./pages/accounting/ReportsHubPage'))
 const TestsHubPage = lazy(() => import('./pages/accounting/TestsHubPage'))
 const OdooPage = lazy(() => import('./pages/accounting/OdooPage'))
+const DigitalDocsPage = lazy(() => import('./pages/accounting/DigitalDocsPage'))
 import { AuthProvider, useAuth } from './AuthContext'
 import { supabase, hasSupabaseConfig } from './lib/supabase'
 import Login from './pages/Login'
@@ -54,6 +55,7 @@ import { getOfflineQueue, syncOfflineQueue } from './lib/offlineManager'
 const ACCT_PAGES = new Set([
   'je-new', 'je-list', 'je-report', 'gl', 'coa', 'cost-centers', 'tb', 'tb-check',
   'vat', 'deferred-rev', 'deferred-exp', 'acct-settings', 'reports-hub', 'tests-hub', 'odoo',
+  'digital-docs',
 ])
 const acctPage = (p) => ACCT_PAGES.has(p) || String(p).startsWith('services')
 
@@ -472,13 +474,15 @@ function Shell() {
               {page === 'gl' && <GeneralLedgerPage onOpenEntry={(id) => { setOpenEntryId(id); setPage('je-list') }} />}
               {page === 'coa' && <ChartOfAccountsPage />}
               {page === 'cost-centers' && <CostCentersPage />}
-              {(page === 'tb' || page === 'tb-check') && <TrialBalancePage />}
+              {page === 'tb' && <TrialBalancePage mode="full" />}
+              {page === 'tb-check' && <TrialBalancePage mode="check" />}
               {page === 'vat' && <TaxCenterPage />}
               {page.startsWith('services') && <ServicesPage initialCategory={page.split(':')[1] || 'all'} />}
               {page === 'deferred-rev' && <DeferredPage kind="revenue" />}
               {page === 'deferred-exp' && <DeferredPage kind="expense" />}
               {page === 'acct-settings' && <AccountingSettingsPage />}
               {page === 'reports-hub' && <ReportsHubPage />}
+              {page === 'digital-docs' && <DigitalDocsPage />}
               {page === 'tests-hub' && <TestsHubPage />}
               {page === 'odoo' && <OdooPage />}
             </>

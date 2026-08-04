@@ -106,7 +106,7 @@ export default function DeferredPage({ kind = 'revenue' }) {
           <RefreshButton onClick={load} busy={busy} />
           <ExcelButton filename={`${isRev ? 'الإيرادات' : 'النفقات'}-المؤجلة.xlsx`}
             sheet="الجدولة" rows={excelRows} numericCols={['الإجمالي', 'مبلغ القسط']} onError={setErr} />
-          <PrintButton targetId="def-print" title={`${isRev ? 'الإيرادات' : 'النفقات'} المؤجلة — ${company?.name || ''}`} />
+          <PrintButton docKind="report" targetId="def-print" title={`${isRev ? 'الإيرادات' : 'النفقات'} المؤجلة — ${company?.name || ''}`} />
         </>
       }
     >

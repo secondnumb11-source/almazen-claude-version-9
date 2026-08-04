@@ -17,9 +17,12 @@ const today = () => new Date().toISOString().slice(0, 10)
  * يشمل كل الحسابات من الألف إلى الياء — بما فيها عديمة الحركة —
  * لأن المحاسب يحتاج إثبات أن الحساب موجود ورصيده صفر، لا أن يختفي.
  */
-export default function TrialBalancePage() {
+export default function TrialBalancePage({ mode = 'full' }) {
   const { profile, company } = useAuth()
   const cid = profile?.company_id
+  // 'full'  = الميزان الكامل ومعه لوحة الفحص.
+  // 'check' = صفحة الفحص والإصلاح وحدها — كانت الصفحتان متطابقتين وهذا خطأ.
+  const checkOnly = mode === 'check'
 
   const [from, setFrom] = useState(yearStart)
   const [to, setTo] = useState(today)
@@ -40,7 +43,7 @@ export default function TrialBalancePage() {
   const [repairLog, setRepairLog] = useState(null)
 
   const load = useCallback(async () => {
-    if (!cid) return
+    if (!cid || checkOnly) return
     setBusy(true); setErr('')
     try {
       const data = await trialBalance({
@@ -50,7 +53,7 @@ export default function TrialBalancePage() {
       })
       setRows(data || [])
     } catch (e) { setErr(e.message) } finally { setBusy(false) }
-  }, [cid, from, to, costCenter, branch, includeZero, includeDraft])
+  }, [cid, from, to, costCenter, branch, includeZero, includeDraft, checkOnly])
 
   useEffect(() => { load() }, [load])
 
@@ -81,11 +84,14 @@ export default function TrialBalancePage() {
     'رصيد آخر المدة مدين': Number(r.o_close_debit), 'رصيد آخر المدة دائن': Number(r.o_close_credit),
   })), [shown])
 
-  const runChecks = async () => {
+  const runChecks = useCallback(async () => {
     setChecking(true); setRepairLog(null)
     try { setChecks(await tbIntegrityCheck(cid)) }
     catch (e) { setErr(e.message) } finally { setChecking(false) }
-  }
+  }, [cid])
+
+  // صفحة الفحص المستقلة تبدأ فحصها فور فتحها بدل انتظار ضغطة زر
+  useEffect(() => { if (checkOnly && cid) runChecks() }, [checkOnly, cid, runChecks])
 
   const runRepair = async (code) => {
     setChecking(true)
@@ -101,10 +107,24 @@ export default function TrialBalancePage() {
 
   return (
     <AcctPage
-      title="ميزان المراجعة"
-      icon={<ScrollText size={20} />}
-      subtitle="كل الحسابات من الألف إلى الياء — رصيد أول المدة، الحركة، ورصيد آخر المدة"
-      tools={
+      title={checkOnly ? 'فحص صحة ميزان المراجعة والإصلاح' : 'ميزان المراجعة الكامل'}
+      icon={checkOnly ? <ShieldCheck size={20} /> : <ScrollText size={20} />}
+      subtitle={checkOnly
+        ? 'ثمانية فحوص على سلامة القيود والشجرة والفترات — وكل خطأ قابل للإصلاح بزر ينفّذ تصحيحاً حقيقياً'
+        : 'كل الحسابات من الألف إلى الياء — رصيد أول المدة، الحركة، ورصيد آخر المدة'}
+      tools={checkOnly ? (
+        <>
+          <button className="btn btn-gold btn-sm" onClick={runChecks} disabled={checking}>
+            {checking ? 'جارٍ الفحص…' : 'إعادة الفحص'}
+          </button>
+          {checks && failCount > 0 && (
+            <button className="btn btn-danger btn-sm" onClick={() => runRepair(null)} disabled={checking}>
+              <Wrench size={13} /> إصلاح الكل ({failCount})
+            </button>
+          )}
+          <PrintButton docKind="report" targetId="tb-check-print" title={`فحص صحة ميزان المراجعة — ${company?.name || ''}`} />
+        </>
+      ) : (
         <>
           <RefreshButton onClick={load} busy={busy} />
           <ExcelButton
@@ -112,12 +132,13 @@ export default function TrialBalancePage() {
             numericCols={['رصيد أول المدة مدين', 'رصيد أول المدة دائن', 'الحركة مدين', 'الحركة دائن', 'رصيد آخر المدة مدين', 'رصيد آخر المدة دائن']}
             onError={setErr}
           />
-          <PrintButton targetId="tb-print" title={`ميزان المراجعة — ${company?.name || ''} — من ${from} إلى ${to}`} />
+          <PrintButton docKind="statement" targetId="tb-print" title={`ميزان المراجعة — ${company?.name || ''} — من ${from} إلى ${to}`} />
         </>
-      }
+      )}
     >
       <Notice kind="error" onClose={() => setErr('')}>{err}</Notice>
 
+      {!checkOnly && (
       <AcctFilters>
         <Field label="من تاريخ"><input type="date" value={from} onChange={e => setFrom(e.target.value)} /></Field>
         <Field label="إلى تاريخ"><input type="date" value={to} onChange={e => setTo(e.target.value)} /></Field>
@@ -148,22 +169,33 @@ export default function TrialBalancePage() {
           تضمين المسودات غير المرحّلة
         </label>
       </AcctFilters>
+      )}
 
       {/* ------- اختبار صحة الميزان مع إصلاح حقيقي ------- */}
-      <div className="acct-integrity">
-        <div className="acct-integrity-head">
-          <ShieldCheck size={16} />
-          <b>اختبار صحة ميزان المراجعة</b>
-          <span>يفحص توازن القيود وسلامة الشجرة والفترات المالية — والإصلاح ينفّذ تغييراً حقيقياً في القاعدة</span>
-          <button className="btn btn-gold btn-sm" onClick={runChecks} disabled={checking}>
-            {checking ? 'جارٍ الفحص…' : 'تشغيل الفحص'}
-          </button>
-          {checks && failCount > 0 && (
-            <button className="btn btn-danger btn-sm" onClick={() => runRepair(null)} disabled={checking}>
-              <Wrench size={13} /> إصلاح الكل ({failCount})
+      <div className="acct-integrity" id="tb-check-print">
+        {!checkOnly && (
+          <div className="acct-integrity-head">
+            <ShieldCheck size={16} />
+            <b>اختبار صحة ميزان المراجعة</b>
+            <span>يفحص توازن القيود وسلامة الشجرة والفترات المالية — والإصلاح ينفّذ تغييراً حقيقياً في القاعدة</span>
+            <button className="btn btn-gold btn-sm" onClick={runChecks} disabled={checking}>
+              {checking ? 'جارٍ الفحص…' : 'تشغيل الفحص'}
             </button>
-          )}
-        </div>
+            {checks && failCount > 0 && (
+              <button className="btn btn-danger btn-sm" onClick={() => runRepair(null)} disabled={checking}>
+                <Wrench size={13} /> إصلاح الكل ({failCount})
+              </button>
+            )}
+          </div>
+        )}
+
+        {checkOnly && checks && (
+          <div className="acct-kpis">
+            <div><span>إجمالي الفحوص</span><b>{checks.length}</b></div>
+            <div><span>سليم</span><b style={{ color: '#065F46' }}>{checks.length - failCount}</b></div>
+            <div className={failCount ? 'due' : ''}><span>يحتاج إصلاح</span><b>{failCount}</b></div>
+          </div>
+        )}
 
         {checks && (
           <table className="acct-table sm">
@@ -200,7 +232,12 @@ export default function TrialBalancePage() {
         )}
       </div>
 
+      {checkOnly && !checks && !checking && (
+        <EmptyState>جارٍ تجهيز الفحص…</EmptyState>
+      )}
+
       {/* ------- الميزان ------- */}
+      {!checkOnly && (
       <div id="tb-print" className="acct-table-wrap">
         {!shown.length && !busy ? (
           <EmptyState>لا توجد حسابات مطابقة للمرشّحات المختارة.</EmptyState>
@@ -258,6 +295,7 @@ export default function TrialBalancePage() {
           </table>
         )}
       </div>
+      )}
     </AcctPage>
   )
 }

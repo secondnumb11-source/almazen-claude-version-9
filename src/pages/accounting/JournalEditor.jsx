@@ -217,7 +217,7 @@ export default function JournalEditor({ entryId, onDone, onOpenEntry }) {
               <Trash2 size={14} /> حذف
             </button>
           )}
-          <PrintButton targetId="je-print" title={`قيد محاسبي ${entryNumber || ''} — ${company?.name || ''}`} />
+          <PrintButton docKind="journal" entityId={id} total={totals.d} docDate={date} targetId="je-print" title={`قيد محاسبي ${entryNumber || ''} — ${company?.name || ''}`} />
           {onDone && <button className="btn btn-ghost btn-sm" onClick={onDone}>رجوع للقائمة</button>}
         </>
       }

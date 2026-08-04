@@ -93,7 +93,7 @@ export default function TaxCenterPage() {
               <RefreshButton onClick={loadReport} busy={busy} />
               <ExcelButton filename={`تقرير-الضريبة-${from}_${to}.xlsx`} sheet="ضريبة القيمة المضافة"
                 rows={excelRows} numericCols={['الصافي', 'الضريبة', 'الإجمالي']} onError={setErr} />
-              <PrintButton targetId="vat-print" title={`تقرير ضريبة القيمة المضافة — ${company?.name || ''} — من ${from} إلى ${to}`} />
+              <PrintButton docKind="report" targetId="vat-print" title={`تقرير ضريبة القيمة المضافة — ${company?.name || ''} — من ${from} إلى ${to}`} />
             </>
           )}
         </>

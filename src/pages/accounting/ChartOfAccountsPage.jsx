@@ -97,7 +97,7 @@ export default function ChartOfAccountsPage() {
           <RefreshButton onClick={load} busy={busy} />
           <ExcelButton filename="شجرة-الحسابات.xlsx" sheet="شجرة الحسابات" rows={excelRows}
             numericCols={['الرصيد الافتتاحي']} onError={setErr} />
-          <PrintButton targetId="coa-print" title={`شجرة الحسابات — ${company?.name || ''}`} />
+          <PrintButton docKind="statement" targetId="coa-print" title={`شجرة الحسابات — ${company?.name || ''}`} />
         </>
       }
     >

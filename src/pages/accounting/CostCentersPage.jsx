@@ -107,7 +107,7 @@ export default function CostCentersPage() {
           <RefreshButton onClick={load} busy={busy} />
           <ExcelButton filename="مراكز-التكلفة.xlsx" sheet="مراكز التكلفة" rows={excelRows}
             numericCols={['مدين خلال الفترة', 'دائن خلال الفترة']} onError={setErr} />
-          <PrintButton targetId="cc-print" title={`مراكز التكلفة — ${company?.name || ''}`} />
+          <PrintButton docKind="report" targetId="cc-print" title={`مراكز التكلفة — ${company?.name || ''}`} />
         </>
       }
     >

@@ -80,7 +80,7 @@ export default function JournalListPage({ initialEntryId, mode = 'summary' }) {
           <RefreshButton onClick={load} busy={busy} />
           <ExcelButton filename={`القيود-${from}_${to}.xlsx`} sheet="القيود المحاسبية"
             rows={excelRows} numericCols={['مدين', 'دائن']} onError={setErr} />
-          <PrintButton targetId="jl-print" title={`القيود المحاسبية — ${company?.name || ''} — من ${from} إلى ${to}`} />
+          <PrintButton docKind="report" targetId="jl-print" title={`القيود المحاسبية — ${company?.name || ''} — من ${from} إلى ${to}`} />
         </>
       }
     >

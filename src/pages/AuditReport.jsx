@@ -169,20 +169,9 @@ export default function AuditReport() {
         { k: 'maint', label: 'التسوية الآلية للصيانة والخدمات', icon: '🔧' },
       ],
     },
-    {
-      title: 'الاختبارات الذكية للمحاسبة',
-      items: [
-        { k: 'engine', label: 'اختبارات محرك التصفية', icon: '⚖️' },
-        { k: 'chart', label: 'اختبارات شجرة الحسابات', icon: '🌳' },
-        { k: 'journals', label: 'اختبارات القيود المُرحَّلة', icon: '📚' },
-        { k: 'regression', label: 'اختبار الانحدار الشامل', icon: '🚀' },
-        ...(isSuperAdmin ? [
-          { k: 'unitstatus', label: 'انتقالات حالة الوحدة', icon: '🔁' },
-          { k: 'integrity', label: 'سلامة المحاسبة الشاملة', icon: '🛡️' },
-          { k: 'branches', label: 'سيناريوهات الفروع', icon: '🏢' },
-        ] : []),
-      ],
-    },
+    // مجموعة «الاختبارات الذكية» أُخفيت من هنا بعد نقلها إلى القائمة المنسدلة
+    // «اختبارات ذكية لسلامة النظام» في لوحة البيانات الجانبية. المكوّنات نفسها
+    // ما زالت مركّبة أدناه فلا ينكسر أي رابط أو حالة محفوظة تشير إليها.
   ]
   const activeTab = (!isSuperAdmin && SUPER_ONLY.includes(tab)) ? 'ledger' : tab
   const isTestsTab = activeTab !== 'ledger'
@@ -193,7 +182,7 @@ export default function AuditReport() {
         <div>
           <h2 style={{ margin: 0 }}>🧾 تقرير التدقيق المحاسبي</h2>
           <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4 }}>
-            القيود المُرحّلة والتصفيات وجميع الاختبارات الذكية للمحاسبة في مكان واحد — للتأكد من صحة جميع الحسابات
+            القيود المُرحّلة والتصفيات — والاختبارات الذكية انتقلت إلى قائمة «اختبارات ذكية لسلامة النظام» في اللوحة الجانبية
             {branchesOn && activeBranch ? ` — نطاق الفرع: ${activeBranchName}` : ''}
           </div>
         </div>
