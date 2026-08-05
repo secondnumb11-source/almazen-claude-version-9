@@ -50,6 +50,7 @@ import { FullPageLoading } from './components/Skeleton'
 import { ROLES } from './lib/helpers'
 import { runDailyNotificationChecks } from './lib/notifications'
 import DataSearch from './components/DataSearch'
+import PageBoundary from './components/PageBoundary'
 import { markPageStart, markPageEnd, prefetchPage } from './lib/perfKit'
 import { getOfflineQueue, syncOfflineQueue } from './lib/offlineManager'
 import { drainChannexQueue } from './lib/channexSync'
@@ -500,6 +501,7 @@ function Shell() {
 
         <div className="app-body">
           {/* RlsHealthBanner مخفي بناءً على طلب المستخدم */}
+          <PageBoundary pageKey={page}>
           <Suspense fallback={<FullPageLoading />}>
           {page === 'home' && <Home onNav={setPage} dashEditMode={dashEditMode} setDashEditMode={setDashEditMode} />}
           {page === 'dash' && <Dashboard editMode={dashEditMode} setEditMode={setDashEditMode} />}
@@ -573,6 +575,7 @@ function Shell() {
                 <p className="muted">سجل نشاط المنصة متاح لحسابات السوبر أدمن فقط.</p>
               </div>)}
           </Suspense>
+          </PageBoundary>
 
         </div>
         <DrawerWidget />
