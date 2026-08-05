@@ -22,7 +22,7 @@ export default function MultiTenantIsolationTest() {
     if (!cid) return
     setRunning(true)
     setFixed([])
-    const { results, summary, durationMs } = await runIsolationSuite({ companyId: cid, companyName: company?.name })
+    const { results, summary, durationMs } = await runIsolationSuite({ companyId: cid, companyName: company?.name, isSuperAdmin })
     let autoFixed = []
     if (summary.fail > 0 && isSuperAdmin) {
       const res = await autoFixIsolation()

@@ -37,7 +37,26 @@ const meh = (name, detail) => ({ status: "warn", name, detail });
 /* اختبارات فردية — كل واحدة مستقلة حتى لا يُسقط خطأٌ واحد بقية الفحص */
 /* ------------------------------------------------------------------ */
 
-async function testRowLeakage(cid) {
+/*
+  مقارنة الصفوف من جلسة المستخدم الحالي لا تصلح لقياس العزل حين يكون
+  المشغّل سوبر أدمن: 249 سياسة RLS على 92 جدولاً تنص صراحةً على
+    ((company_id = get_my_company_id()) OR is_super_admin())
+  فرؤيته لكل المنشآت مقصودة بالتصميم، وإعلانها «تسريباً» إنذار كاذب —
+  وهو ما كان يُنتج 18 بنداً أحمر يُفقد الثقة بكل الاختبارات.
+
+  البديل الصادق: قياس بنية السياسات عبر ci_isolation_checks، والتحقق
+  الميداني بجلسة مستخدم عادي مع تفعيل RLS (نُفِّذ 2026-08-05: 13 جدولاً،
+  صفر تسريب).
+*/
+async function testRowLeakage(cid, isSuperAdmin) {
+  if (isSuperAdmin) {
+    return [
+      meh(
+        "عزل الصفوف (لا يُقاس من هذه الجلسة)",
+        "حسابك سوبر أدمن، والسياسات تمنحه رؤية كل المنشآت عمداً — فمقارنة الصفوف هنا تُنتج إنذاراً كاذباً. اعتمد «تدقيق العزل البنيوي» في مركز الاختبارات.",
+      ),
+    ];
+  }
   const out = [];
   for (const { t, label } of SCOPED_TABLES) {
     try {
@@ -288,7 +307,7 @@ async function testQueryConsistency(cid) {
  * تشغيل الحزمة الكاملة.
  * @returns {{results:Array, summary:{pass:number,warn:number,fail:number}, durationMs:number}}
  */
-export async function runIsolationSuite({ companyId, companyName } = {}) {
+export async function runIsolationSuite({ companyId, companyName, isSuperAdmin = false } = {}) {
   const started = Date.now();
   if (!companyId) {
     return {
@@ -297,15 +316,20 @@ export async function runIsolationSuite({ companyId, companyName } = {}) {
       durationMs: 0,
     };
   }
+  // الاختبارات التي تقيس العزل بمقارنة الصفوف من الجلسة الحالية لا تصلح
+  // لحساب سوبر أدمن — تُستبدل بملاحظة صريحة بدل إنذارات كاذبة.
+  const notMeasurable = (name) =>
+    meh(name, "لا يُقاس من جلسة سوبر أدمن: السياسات تمنحه رؤية كل المنشآت عمداً. اعتمد «تدقيق العزل البنيوي».");
+
   const groups = await Promise.all([
-    testRowLeakage(companyId),
-    testDirectBreach(companyId),
-    testChildTables(companyId),
+    testRowLeakage(companyId, isSuperAdmin),
+    isSuperAdmin ? [notMeasurable("الاختراق المباشر لمنشأة أخرى")] : testDirectBreach(companyId),
+    isSuperAdmin ? [notMeasurable("عزل الجداول التابعة")] : testChildTables(companyId),
     testVisibleCompanies(companyId, companyName),
     testUserBranches(companyId),
     testSchemaDrift(),
     testCrossTenantWrite(companyId),
-    testQueryConsistency(companyId),
+    isSuperAdmin ? [notMeasurable("ثبات الاستعلامات")] : testQueryConsistency(companyId),
   ]);
   const results = groups.flat();
   return {

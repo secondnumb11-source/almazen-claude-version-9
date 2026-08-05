@@ -170,6 +170,27 @@ const SUITES = [
     fix: async () => { throw new Error('يُصلَح بتطبيق CUSTOMER_DOC_VAULT_FIX.sql') },
   },
   {
+    id: 'isolation', label: 'تدقيق العزل البنيوي بين المنشآت', icon: '🔐',
+    desc: 'العزل لا يُقاس بمقارنة صفوف من جلسة سوبر أدمن — فالسياسات تمنحه رؤية الجميع عمداً، فيظهر إنذار كاذب. هذا التدقيق يقيس البنية نفسها: تفعيل RLS، وجود سياسة قراءة لكل جدول، سياسات متساهلة بلا شرط منشأة، صفوف يتيمة بلا منشأة، وفهرسة عمود الربط. وزر الإصلاح يُنفّذ تغييراً فعلياً ويُعيد عدد ما غيّره.',
+    superOnly: true,
+    run: async () => {
+      const { data, error } = await supabase.rpc('ci_isolation_checks')
+      if (error) throw new Error(error.message)
+      return (data || []).map(r => ({
+        code: r.o_suite, title: r.o_name, status: r.o_status,
+        detail: r.o_message, fixable: !!r.o_fix, fixKey: r.o_fix,
+      }))
+    },
+    fix: async (cid, code, row) => {
+      if (!row?.fixKey) throw new Error('لا يوجد إصلاح آلي لهذا الفحص')
+      const { data, error } = await supabase.rpc('isolation_repair', { _fix: row.fixKey })
+      if (error) throw new Error(error.message)
+      const r = (data || [])[0]
+      // لا رسالة نجاح بلا عمل: يُعاد ما نُفِّذ فعلاً بالأرقام
+      return r ? `${r.o_action}: ${r.o_affected} — ${r.o_detail}` : 'لم يُنفَّذ أي تغيير'
+    },
+  },
+  {
     id: 'ops', label: 'الوحدات والحجوزات وحالات التشغيل', icon: '🏢',
     desc: 'حجز يبقى «مُسجَّل دخول» بعد تاريخ خروجه يُبقي الوحدة محجوزة بلا سبب ويُفسد تقارير الإشغال. يفحص أيضاً تعارض حالات الوحدات وتداخل الحجوزات ووحدات الاختبار.',
     superOnly: true,
