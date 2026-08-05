@@ -142,6 +142,20 @@ const SUITES = [
     },
   },
   {
+    id: 'cron', label: 'المهام المجدولة', icon: '⏰',
+    desc: 'مهمة مجدولة تفشل بصمت أخطر من غيابها: تبدو قائمة وهي لا تعمل. يفحص التشغيلات الفاشلة، والمهام اليومية التي لم تنجح خلال 48 ساعة، وأن كل مهمة تستدعي دالة محصّنة تضبط عَلَم التشغيل النظامي.',
+    superOnly: true,
+    run: async () => {
+      const { data, error } = await supabase.rpc('ci_cron_checks')
+      if (error) throw new Error(error.message)
+      return (data || []).map(r => ({
+        code: r.o_suite, title: r.o_name, status: r.o_status,
+        detail: r.o_message, fixable: false,
+      }))
+    },
+    fix: async () => { throw new Error('يُصلَح بإعادة جدولة المهمة من ملف CRON_SYSTEM_RUN_FIX.sql') },
+  },
+  {
     id: 'ops', label: 'الوحدات والحجوزات وحالات التشغيل', icon: '🏢',
     desc: 'حجز يبقى «مُسجَّل دخول» بعد تاريخ خروجه يُبقي الوحدة محجوزة بلا سبب ويُفسد تقارير الإشغال. يفحص أيضاً تعارض حالات الوحدات وتداخل الحجوزات ووحدات الاختبار.',
     superOnly: true,
