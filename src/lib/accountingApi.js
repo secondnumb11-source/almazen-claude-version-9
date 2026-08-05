@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { downloadWorkbook, sheetFromRows } from './excel'
+import { downloadWorkbook } from './excel'
 
 /*
   طبقة وصول واحدة للنظام المحاسبي.
@@ -346,7 +346,9 @@ export const JE_STATUS = {
 /** يصدّر أي جدول معروض إلى ملف إكسيل حقيقي بمعادلات إجمالية. */
 export function exportRows(filename, sheetName, rows, numericCols = []) {
   if (!rows?.length) throw new Error('لا توجد بيانات للتصدير')
-  downloadWorkbook(filename, [{ name: sheetName, ws: sheetFromRows(rows, numericCols) }])
+  // downloadWorkbook يبني الورقة بنفسه من rows/numeric — تمرير ws جاهزة يُهمَل
+  // ويُنتج ملفاً فارغاً، فنمرّر الصفوف كما تتوقعها الدالة.
+  downloadWorkbook(filename, [{ name: sheetName, rows, numeric: numericCols }])
 }
 
 /**

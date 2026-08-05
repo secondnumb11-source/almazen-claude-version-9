@@ -17,9 +17,14 @@ export function sheetFromRows(rows, numericCols = []) {
     const col = XLSX.utils.encode_col(ci)
     const addr = `${col}${totalRowIdx}`
     if (numericCols.includes(h)) {
-      ws[addr] = { t: 'n', f: `SUM(${col}2:${col}${n + 1})` }
+      // خلية بمعادلة بلا قيمة محسوبة يُسقطها كاتب xlsx فيخرج صف الإجمالي فارغاً.
+      // نكتب القيمة والمعادلة معاً: الرقم يظهر فوراً والمعادلة تبقى حيّة.
+      const nums = rows.map(r => Number(r[h])).filter(x => Number.isFinite(x))
+      const sum = nums.reduce((a, b) => a + b, 0)
+      const avg = nums.length ? sum / nums.length : 0
+      ws[addr] = { t: 'n', v: Math.round(sum * 100) / 100, f: `SUM(${col}2:${col}${n + 1})` }
       const avgAddr = `${col}${totalRowIdx + 1}`
-      ws[avgAddr] = { t: 'n', f: `AVERAGE(${col}2:${col}${n + 1})` }
+      ws[avgAddr] = { t: 'n', v: Math.round(avg * 100) / 100, f: `AVERAGE(${col}2:${col}${n + 1})` }
     } else if (ci === 0) {
       ws[addr] = { t: 's', v: 'الإجمالي (معادلة SUM)' }
       ws[`${col}${totalRowIdx + 1}`] = { t: 's', v: 'المتوسط (معادلة AVERAGE)' }
