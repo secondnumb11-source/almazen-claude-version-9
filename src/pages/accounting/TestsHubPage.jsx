@@ -87,6 +87,24 @@ const SUITES = [
     },
   },
   {
+    id: 'online', label: 'الحجوزات الأونلاين ومزامنة الوحدات', icon: '💗',
+    desc: 'يتأكد أن الحجز القادم من المنصات العالمية يحوّل الوحدة إلى «محجوز أونلاين» فوراً فتظهر وردية ولا تُحجز محلياً مرة ثانية، وأن الإلغاء يحرّرها.',
+    superOnly: true,
+    run: async () => {
+      const { data, error } = await supabase.rpc('ci_online_booking_checks')
+      if (error) throw new Error(error.message)
+      return (data || []).map(r => ({
+        code: r.o_suite, title: r.o_name, status: r.o_status,
+        detail: r.o_message, fixable: !!r.o_fix, fixKey: r.o_fix,
+      }))
+    },
+    fix: async (cid, code, row) => {
+      const { data, error } = await supabase.rpc('ci_apply_fix_to_all_users', { _check_id: row.fixKey })
+      if (error) throw new Error(error.message)
+      return data
+    },
+  },
+  {
     id: 'ota', label: 'سلامة طابور الربط مع منصات الحجز', icon: '🌐',
     desc: 'يتأكد أن كل نوع مهمة له منفّذ فعلي، وألا تتراكم مهام محكوم عليها بالفشل، وأن مُشغّل الطابور يعمل.',
     superOnly: true,
