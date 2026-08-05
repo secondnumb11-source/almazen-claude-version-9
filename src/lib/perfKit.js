@@ -135,11 +135,17 @@ export function markPageEnd(page, meta = {}) {
   return ms
 }
 
+// قياسات خادم التطوير لا تمثّل الإنتاج: Vite يُصرِّف كل حزمة كسولة عند أول
+// فتح فتظهر ثوانٍ وهمية. تسجيلها في قاعدة الإنتاج يُفشل ميزانية الأداء بلا
+// سبب حقيقي — وقد حدث فعلاً (ejar=8529ms من جولة فحص محلية).
+const isLocalHost = () => typeof location !== 'undefined'
+  && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)
+
 async function flushSamples() {
   flushTimer = null
   const batch = pending
   pending = []
-  if (!batch.length) return
+  if (!batch.length || isLocalHost()) return
   try {
     const { data: u } = await supabase.auth.getUser()
     await supabase.from('ci_perf_samples').insert(
