@@ -71,7 +71,7 @@ export default function VoucherPrintModal({ voucher: v, company, onClose }) {
           {doc}
         </div>
         <div className="modal-f no-print">
-          <button className="btn btn-gold" onClick={() => printElement(doc, { title })}>🖨 طباعة</button>
+          <button className="btn btn-gold" onClick={() => printElement(doc, { title, docKind: v?.voucher_type === 'receipt' ? 'receipt' : 'payment', entityId: v?.id, total: v?.amount, docDate: v?.voucher_date })}>🖨 طباعة</button>
         </div>
       </div>
     </div>

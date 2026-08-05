@@ -456,7 +456,15 @@ export default function SettlementModal({ unit, booking, onClose, isInline = fal
         paidSoFar={paidSoFar} 
         companyLogo={company?.logo || ''}
       />, 
-      { title: doneInvoice.invoiceType === 'simplified' ? 'فاتورة ضريبية مبسطة' : doneInvoice.invoiceType === 'corporate' ? 'فاتورة ضريبية للشركات' : 'سند تصفية ومغادرة' }
+      {
+        title: doneInvoice.invoiceType === 'simplified' ? 'فاتورة ضريبية مبسطة'
+             : doneInvoice.invoiceType === 'corporate' ? 'فاتورة ضريبية للشركات'
+             : 'سند تصفية ومغادرة',
+        // الفاتورة والتسوية مستندان يُقدَّمان للعميل والمراجع، فيُختمان
+        docKind: doneInvoice.invoiceType ? 'invoice' : 'settlement',
+        entityId: doneInvoice.id || null,
+        total: doneInvoice.total ?? doneInvoice.grandTotal ?? null,
+      }
     )
   }
 
@@ -591,7 +599,14 @@ function SettlementUI({
         paidSoFar={paidSoFar} 
         companyLogo={company?.logo || ''}
       />, 
-      { title: invoiceType === 'simplified' ? 'مسودة فاتورة ضريبية مبسطة' : invoiceType === 'corporate' ? 'مسودة فاتورة ضريبية للشركات' : 'مسودة سند تصفية ومغادرة' }
+      {
+        title: invoiceType === 'simplified' ? 'مسودة فاتورة ضريبية مبسطة'
+             : invoiceType === 'corporate' ? 'مسودة فاتورة ضريبية للشركات'
+             : 'مسودة سند تصفية ومغادرة',
+        // المسودة لا تُختم: الختم يمنح رقماً تسلسلياً ورمز تحقق، ومنحه
+        // لورقة معاينة يجعل رقماً رسمياً يُصرف على مستند لم يصدر بعد.
+        stamp: false,
+      }
     )
   }
   

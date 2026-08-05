@@ -119,7 +119,7 @@ export default function RentalContract({ booking, customer, unit, company, emplo
           {doc}
         </div>
         <div className="modal-f no-print">
-          <button className="btn btn-gold" onClick={() => printElement(doc, { title: 'عقد الإيجار الإلكتروني' })}>🖨 طباعة العقد</button>
+          <button className="btn btn-gold" onClick={() => printElement(doc, { title: 'عقد الإيجار الإلكتروني', docKind: 'contract', entityId: booking?.id, total: booking?.total_amount, docDate: booking?.check_in_date })}>🖨 طباعة العقد</button>
         </div>
       </div>
     </div>

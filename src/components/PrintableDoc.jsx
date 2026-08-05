@@ -49,7 +49,7 @@ export default function PrintableDoc({ company, title, subtitle, qrValue, docNum
           {doc}
         </div>
         <div className="modal-f no-print">
-          <button className="btn btn-gold" onClick={() => printElement(doc, { title })}>🖨 طباعة</button>
+          <button className="btn btn-gold" onClick={() => printElement(doc, { title, docKind, entityId: docId })}>🖨 طباعة</button>
         </div>
       </div>
     </div>

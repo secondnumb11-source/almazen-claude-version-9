@@ -9,7 +9,8 @@ export default function UnitQRCodeModal({ unit, companyName, onClose }) {
   const scanUrl = `${window.location.origin}/?unit_id=${unit.id}&action=maintenance`
 
   const handlePrint = () => {
-    printElement('unit-qr-sticker-printable')
+    // ملصق لاصق لا مستند رسمي: لا يُختم برقم تسلسلي
+    printElement('unit-qr-sticker-printable', { title: `ملصق QR — وحدة ${unit.unit_number}`, stamp: false })
   }
 
   return (

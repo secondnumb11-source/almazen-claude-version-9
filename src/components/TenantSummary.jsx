@@ -275,7 +275,7 @@ export default function TenantSummary({ booking, unit, onClose, autoSend }) {
           {printDoc}
 
           <div style={{ display: 'flex', gap: 10, marginTop: 18 }} className="no-print">
-            <button className="btn btn-gold" onClick={() => printElement(printDoc, { title: 'ملخص إيجار — وحدة ' + (unit?.unit_number || '') })}>🖨 طباعة / PDF</button>
+            <button className="btn btn-gold" onClick={() => printElement(printDoc, { title: 'ملخص إيجار — وحدة ' + (unit?.unit_number || ''), docKind: 'statement' })}>🖨 طباعة / PDF</button>
             <button className="btn btn-ghost" onClick={onClose}>إغلاق</button>
           </div>
         </div>

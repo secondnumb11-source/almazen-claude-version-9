@@ -1,4 +1,57 @@
 import { renderToStaticMarkup } from 'react-dom/server'
+import { supabase } from './supabase'
+
+/** تهريب HTML — العنوان والبيانات تأتي من إدخال المستخدم. */
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, ch => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+))
+
+/**
+ * يختم المستند رقمياً قبل طباعته: رقم تسلسلي، وبصمة SHA-256 مشتقة من
+ * نصّه، ورمز تحقق قصير. الغرض أن تكون الورقة الخارجة من النظام قابلة
+ * للإثبات أمام طرف ثالث — عميل أو مورد أو مراجع.
+ *
+ * الفشل لا يمنع الطباعة أبداً: الختم خدمة توثيق مساعدة، وحجب الطباعة
+ * بسببه يعطّل عملاً حقيقياً. لكنه يُسجَّل في وحدة التحكم بدل ابتلاعه
+ * صامتاً — الابتلاع الصامت هو ما أخفى تعطّل الختم كاملاً من قبل.
+ */
+async function stampDocument({ docKind, title, payload, entityId, total, docDate }) {
+  try {
+    const { data, error } = await supabase.rpc('doc_stamp', {
+      p_kind: docKind || 'report',
+      p_title: title || null,
+      p_payload: (payload || '').slice(0, 20000),
+      p_table: null,
+      p_id: entityId || null,
+      p_total: total ?? null,
+      p_date: docDate || null,
+      p_meta: {},
+    })
+    if (error) { console.warn('تعذّر ختم المستند رقمياً:', error.message); return null }
+    return data || null
+  } catch (e) {
+    console.warn('تعذّر ختم المستند رقمياً:', e?.message || e)
+    return null
+  }
+}
+
+/** كتلة الختم التي تُذيَّل بها الورقة المطبوعة. */
+function stampBlock(stamp) {
+  if (!stamp?.serial) return ''
+  return `
+<div class="dstamp">
+  <div class="dstamp-col">
+    <b>مستند موثّق رقمياً</b>
+    <span>الرقم التسلسلي: <code>${esc(stamp.serial)}</code></span>
+    <span>رمز التحقق: <code class="big">${esc(stamp.code || '')}</code></span>
+  </div>
+  <div class="dstamp-col dstamp-end">
+    <span>بصمة المحتوى (SHA-256)</span>
+    <code class="hash">${esc((stamp.hash || '').slice(0, 32))}…</code>
+    <span>للتحقق: سجل المستندات الرقمية ← «تحقق من مستند»</span>
+  </div>
+</div>`
+}
 
 /*
   يطبع عنصر React واحد في نافذة منبثقة معزولة تماماً عن صفحة التطبيق،
@@ -6,8 +59,28 @@ import { renderToStaticMarkup } from 'react-dom/server'
   محتوى الصفحة كاملاً (القائمة الجانبية + أي نوافذ أخرى مفتوحة) بدل
   المستند المطلوب فقط. النافذة الجديدة تحتوي حصراً على العنصر الممرَّر.
 */
-export function printElement(reactElement, { title = 'مستند' } = {}) {
-  const bodyHtml = renderToStaticMarkup(reactElement)
+export async function printElement(reactElement, opts = {}) {
+  const {
+    title = 'مستند',
+    // نوع المستند يحدّد سلسلة ترقيمه في السجل الرقمي
+    docKind = 'report',
+    entityId = null, total = null, docDate = null,
+    stamp: doStamp = true,
+  } = opts
+
+  // يقبل عنصر React، أو معرّف عنصر في الصفحة الحالية. تمرير معرّف كان
+  // يُمرَّر إلى renderToStaticMarkup فيُطبع النص حرفياً بدل المحتوى —
+  // وهو ما كان يحدث فعلاً في ملصق QR للوحدة.
+  const bodyHtml = typeof reactElement === 'string'
+    ? (document.getElementById(reactElement)?.outerHTML
+       ?? `<p>تعذّر العثور على المحتوى المطلوب طباعته (${esc(reactElement)})</p>`)
+    : renderToStaticMarkup(reactElement)
+
+  // البصمة تُشتق من نصّ المستند لا من ترميزه، فلا يغيّرها اختلاف تنسيق
+  const plain = bodyHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  const stamp = doStamp
+    ? await stampDocument({ docKind, title, payload: plain, entityId, total, docDate })
+    : null
 
   const html = `<!doctype html>
 <html lang="ar" dir="rtl"><head>
@@ -18,6 +91,16 @@ export function printElement(reactElement, { title = 'مستند' } = {}) {
   body { font-family:'Tajawal','Cairo',sans-serif; margin:0; padding:26px; color:#0E2340; background:#fff; line-height:1.7; font-size:15px }
   h1,h2,h3,h4 { font-family:'Cairo','Tajawal',sans-serif }
   img { max-width:100% }
+
+  /* ختم التوثيق الرقمي — يُذيَّل به كل مستند يخرج من النظام */
+  .dstamp{margin-top:22px;padding:10px 14px;border:1.5px dashed #C6A24B;border-radius:10px;
+    background:#FEFBF2;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;font-size:11px}
+  .dstamp-col{display:flex;flex-direction:column;gap:3px}
+  .dstamp-end{text-align:left;align-items:flex-start}
+  .dstamp b{font-size:12px;color:#7A5B12}
+  .dstamp code{font-family:ui-monospace,Consolas,monospace;direction:ltr;unicode-bidi:embed}
+  .dstamp code.big{font-size:15px;font-weight:800;letter-spacing:1.5px;color:#0E2340}
+  .dstamp code.hash{font-size:10px;color:#64748B;word-break:break-all}
 
   /* ===== مستند العقود/التقارير العامة (PrintableDoc, RentalContract) ===== */
   .contract-doc{border:1px solid #E2E9F2;border-radius:14px;padding:26px;font-size:14px;background:linear-gradient(180deg,#fff,#fffdf7)}
@@ -125,6 +208,7 @@ export function printElement(reactElement, { title = 'مستند' } = {}) {
     <button onclick="window.close()">إغلاق</button>
   </div>
   ${bodyHtml}
+  ${stampBlock(stamp)}
 </body></html>`
 
   const w = window.open('', '_blank', 'width=1000,height=800')

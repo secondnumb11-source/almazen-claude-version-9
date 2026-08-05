@@ -1871,7 +1871,7 @@ function InvoiceView({ inv, company, customer, onClose }) {
           {doc}
 
           <div style={{ display: 'flex', gap: 10, marginTop: 14 }} className="no-print">
-            <button className="btn btn-gold" onClick={() => printElement(doc, { title: titleAr })}>🖨 طباعة / PDF</button>
+            <button className="btn btn-gold" onClick={() => printElement(doc, { title: titleAr, docKind: 'report' })}>🖨 طباعة / PDF</button>
             <button className="btn btn-ghost" onClick={onClose}>إغلاق</button>
           </div>
         </div>
