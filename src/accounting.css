@@ -596,3 +596,43 @@
 }
 .tb-deftab .acct-table td { border-bottom: 1px solid rgba(226,233,242,.7); font-size: .74rem; }
 .tb-deftab .acct-table tr:last-child td { border-bottom: 0; }
+
+/* ============ تمييز أقسام المحاسبة في اللوحة الجانبية ============
+   المطلوب: أن تُعرف أقسام المحاسبة بنظرة، وأن يتميّز سهمها بلون خاص.
+   اللون الأزرق السماوي مقابل الذهبي في بقية الأقسام. */
+.sb-group-acc.sb-acct .sb-acc-arrow {
+  color: #7DD3FC;
+  background: rgba(56,189,248,.16);
+  box-shadow: inset 0 0 0 1px rgba(125,211,252,.3);
+}
+.sb-group-acc.sb-acct .sb-acc-btn:hover .sb-acc-arrow {
+  color: #BAE6FD; background: rgba(56,189,248,.3);
+}
+.sb-group-acc.sb-acct.open .sb-acc-arrow {
+  color: #06263B;
+  background: linear-gradient(135deg, #A5E8FF, #38BDF8);
+  box-shadow: 0 0 10px rgba(56,189,248,.85), 0 0 24px rgba(56,189,248,.4);
+}
+.sb-group-acc.sb-acct .sb-acc-edge {
+  background: linear-gradient(180deg, #A5E8FF, #38BDF8);
+}
+.sb-group-acc.sb-acct.open .sb-acc-edge {
+  box-shadow: 0 0 9px 1px rgba(56,189,248,.9), 0 0 20px rgba(56,189,248,.45);
+}
+.sb-group-acc.sb-acct.open {
+  background: linear-gradient(180deg, rgba(56,189,248,.15), rgba(56,189,248,.04) 42%, transparent);
+  box-shadow: inset 0 0 0 1px rgba(56,189,248,.34), 0 6px 20px rgba(4,12,26,.28);
+}
+.sb-group-acc.sb-acct.open .sb-acc-btn { background: rgba(56,189,248,.1); }
+.sb-group-acc.sb-acct.open .sb-group-title { color: #BAE6FD; }
+.sb-group-acc.sb-acct.open .sb-acc-count { background: rgba(56,189,248,.26); color: #BAE6FD; }
+.sb-group-acc.sb-acct.open .sb-group-items { box-shadow: inset 0 0 0 1px rgba(56,189,248,.18); }
+.sb-group-acc.sb-acct.has-active:not(.open) .sb-acc-btn::after {
+  background: #38BDF8; box-shadow: 0 0 7px rgba(56,189,248,.95);
+}
+.sb-group-acc.sb-acct.open .sb-group-icon { filter: drop-shadow(0 0 6px rgba(56,189,248,.75)); }
+
+/* تكبير نسبي لعناوين أقسام المحاسبة — طُلب صراحةً */
+.sb-group-acc.sb-acct .sb-group-title { font-size: 1.06em; font-weight: 800; letter-spacing: .2px; }
+.sb-group-acc.sb-acct .sb-group-icon { font-size: 1.12em; }
+.sb-group-acc.sb-acct .sb-item .sb-label { font-size: 1.04em; }

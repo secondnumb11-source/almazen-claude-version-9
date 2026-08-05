@@ -106,6 +106,24 @@ const SUITES = [
     },
   },
   {
+    id: 'vouchers', label: 'ترحيل السندات اليدوية للدفاتر', icon: '🧾',
+    desc: 'السند اليدوي يوثّق حركة نقدية حقيقية؛ فإن لم يصل الدفاتر اختفت الحركة من الأستاذ وميزان المراجعة وقائمة الدخل. هذا الفحص يكشف ذلك، وزر الإصلاح ينشئ القيد الناقص لكل المنشآت.',
+    superOnly: true,
+    run: async () => {
+      const { data, error } = await supabase.rpc('ci_voucher_checks')
+      if (error) throw new Error(error.message)
+      return (data || []).map(r => ({
+        code: r.o_suite, title: r.o_name, status: r.o_status,
+        detail: r.o_message, fixable: !!r.o_fix, fixKey: r.o_fix,
+      }))
+    },
+    fix: async () => {
+      const { data, error } = await supabase.rpc('voucher_backfill_ledger', { p_dry: false })
+      if (error) throw new Error(error.message)
+      return data
+    },
+  },
+  {
     id: 'posting', label: 'اكتمال ترحيل المستندات', icon: '📌',
     desc: 'يتأكد أن كل مصروف ودفعة لها قيد محاسبي — وهو الخلل الذي أخفى ١٬٨٩٩ ر.س سابقاً.',
     run: async (cid) => {

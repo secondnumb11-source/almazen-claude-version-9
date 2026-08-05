@@ -282,7 +282,8 @@ export default function AppSidebar({ page, setPage, collapsed, onToggle, onOpenR
               className={'sb-group'
                 + (isAccordion ? ' sb-group-acc' : '')
                 + (isAccordion && expanded ? ' open' : '')
-                + (hasActive ? ' has-active' : '')}
+                + (hasActive ? ' has-active' : '')
+                + (group.domain === 'acct' ? ' sb-acct' : '')}
             >
               {!contentCollapsed && (
                 isAccordion ? (

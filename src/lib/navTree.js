@@ -26,7 +26,7 @@ export const NAV_GROUPS = [
 
   /* ============ المحاسبة: قوائم منسدلة متتالية ============ */
   {
-    id: 'acct-journals', category: 'القيود المحاسبية', icon: '📝', accordion: true, roles: 'finance',
+    id: 'acct-journals', domain: 'acct', category: 'القيود المحاسبية', icon: '📝', accordion: true, roles: 'finance',
     items: [
       { k: 'je-new', label: 'إضافة قيد جديد', icon: '➕', roles: 'finance', keywords: 'قيد يومية إضافة جديد' },
       { k: 'je-list', label: 'ملخص القيود المسجلة', icon: '📋', roles: 'finance', keywords: 'قيود ملخص مسجلة يومية' },
@@ -34,7 +34,7 @@ export const NAV_GROUPS = [
     ],
   },
   {
-    id: 'acct-ledger', category: 'دفتر الأستاذ', icon: '📖', accordion: true, roles: 'finance',
+    id: 'acct-ledger', domain: 'acct', category: 'دفتر الأستاذ', icon: '📖', accordion: true, roles: 'finance',
     items: [
       { k: 'gl', label: 'كشف حساب الأستاذ', icon: '📖', roles: 'finance', keywords: 'أستاذ دفتر كشف حساب رصيد' },
       { k: 'coa', label: 'شجرة الحسابات', icon: '🌳', roles: 'finance', keywords: 'شجرة حسابات دليل أصل فروع' },
@@ -42,14 +42,14 @@ export const NAV_GROUPS = [
     ],
   },
   {
-    id: 'acct-tb', category: 'ميزان المراجعة', icon: '⚖️', accordion: true, roles: 'finance',
+    id: 'acct-tb', domain: 'acct', category: 'ميزان المراجعة', icon: '⚖️', accordion: true, roles: 'finance',
     items: [
       { k: 'tb', label: 'ميزان المراجعة الكامل', icon: '⚖️', roles: 'finance', keywords: 'ميزان مراجعة رصيد أول المدة حركة' },
       { k: 'tb-check', label: 'فحص صحة الميزان والإصلاح', icon: '🛡️', roles: 'finance', keywords: 'فحص ميزان إصلاح توازن' },
     ],
   },
   {
-    id: 'acct-deferred', category: 'الإيرادات والنفقات المؤجلة', icon: '⏳', accordion: true, roles: 'finance',
+    id: 'acct-deferred', domain: 'acct', category: 'الإيرادات والنفقات المؤجلة', icon: '⏳', accordion: true, roles: 'finance',
     items: [
       { k: 'deferred-rev', label: 'قيود الإيرادات المؤجلة', icon: '📥', roles: 'finance', keywords: 'إيراد مؤجل استحقاق' },
       { k: 'deferred-exp', label: 'قيود النفقات المؤجلة', icon: '📤', roles: 'finance', keywords: 'مصروف مؤجل مدفوع مقدما' },
@@ -57,13 +57,13 @@ export const NAV_GROUPS = [
     ],
   },
   {
-    id: 'acct-tax', category: 'الضريبة', icon: '％', accordion: true, roles: 'finance',
+    id: 'acct-tax', domain: 'acct', category: 'الضريبة', icon: '％', accordion: true, roles: 'finance',
     items: [
       { k: 'vat', label: 'ضريبة القيمة المضافة', icon: '％', roles: 'finance', keywords: 'ضريبة قيمة مضافة vat مخرجات مدخلات' },
     ],
   },
   {
-    id: 'acct-services', category: 'الخدمات', icon: '🧾', accordion: true, roles: 'finance',
+    id: 'acct-services', domain: 'acct', category: 'الخدمات', icon: '🧾', accordion: true, roles: 'finance',
     items: [
       { k: 'services', label: 'كل الخدمات', icon: '🧾', roles: 'finance', keywords: 'خدمات بنود كتالوج' },
       { k: 'services:الإيرادات', label: '— الإيرادات', icon: '📥', roles: 'finance', keywords: 'إيرادات مبيعات فوائد' },
@@ -97,7 +97,7 @@ export const NAV_GROUPS = [
     ],
   },
   {
-    id: 'acct-reports', category: 'التقارير المحاسبية', icon: '📊', accordion: true, roles: 'finance',
+    id: 'acct-reports', domain: 'acct', category: 'التقارير المحاسبية', icon: '📊', accordion: true, roles: 'finance',
     items: [
       { k: 'reports-hub', label: 'مركز التقارير المحاسبية', icon: '📊', roles: 'finance', keywords: 'تقارير قائمة الدخل مركز مالي تدفقات' },
       { k: 'digital-docs', label: 'سجل المستندات الرقمية', icon: '🔏', roles: 'finance', keywords: 'رقمنة مستند ختم تسلسلي رمز تحقق بصمة' },
@@ -108,7 +108,7 @@ export const NAV_GROUPS = [
     ],
   },
   {
-    id: 'acct-tests', category: 'اختبارات ذكية لسلامة النظام', icon: '🧪', accordion: true, roles: 'finance',
+    id: 'acct-tests', domain: 'acct', category: 'اختبارات ذكية لسلامة النظام', icon: '🧪', accordion: true, roles: 'finance',
     items: [
       { k: 'tests-hub', label: 'مركز الاختبارات الذكية', icon: '🧪', roles: 'finance', keywords: 'اختبار فحص سلامة إصلاح' },
     ],
