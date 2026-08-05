@@ -37,7 +37,9 @@ create or replace function public.doc_stamp(
   p_meta    jsonb default '{}'::jsonb
 ) returns jsonb
 language plpgsql security definer
-set search_path to 'public','pg_temp'
+-- pgcrypto مثبَّت في مخطط extensions لا public: بدونه في المسار تفشل
+-- digest() فلا يُختم أي مستند — وهو ما أثبته الاختبار السلوكي (0 من 10).
+set search_path to 'public','extensions','pg_temp'
 as $$
 declare
   v_co uuid; v_serial text; v_hash text; v_code text; v_row public.document_registry;
@@ -81,7 +83,7 @@ grant execute on function public.doc_stamp(text,text,text,text,uuid,numeric,date
 create or replace function public.doc_verify(p_code text, p_hash text default null)
 returns jsonb
 language plpgsql security definer stable
-set search_path to 'public','pg_temp'
+set search_path to 'public','extensions','pg_temp'
 as $$
 declare r record; c record;
 begin
