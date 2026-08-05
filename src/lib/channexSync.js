@@ -6,6 +6,30 @@ import { supabase } from './supabase'
   فوراً بدل انتظار ضغط المالك لزر "مزامنة الآن" يدوياً. غير معطِّل للواجهة:
   يعمل في الخلفية ويُهمَل أي خطأ (المهمة تبقى في الطابور لإعادة محاولتها لاحقاً).
 */
+/**
+ * يُفرِّغ الطابور عند بدء الجلسة إن وُجدت مهام معلّقة.
+ *
+ * لماذا هذا يكفي بدل جدولة خادمية: المعالج دالة حافة تُستدعى بهوية
+ * المستخدم الحالي، والجدولة الخادمية كانت تتطلب مفتاح خدمة — سرّاً
+ * يمنح صلاحية كاملة على القاعدة. تفريغ الطابور عند الدخول وعند كل
+ * حدث يجعل أطول تأخير ممكن هو وقت غياب كل المستخدمين، وهو ما لا
+ * يضرّ لأن المزامنة تلحق فور دخول أول مستخدم.
+ */
+export async function drainChannexQueue(companyId) {
+  if (!companyId || !supabase?.functions?.invoke) return
+  try {
+    const { count } = await supabase
+      .from('ota_sync_queue')
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', companyId)
+      .eq('status', 'pending')
+    if (!count) return
+    await supabase.functions.invoke('channex-process-queue', { body: { company_id: companyId } })
+  } catch {
+    /* المهام تبقى في الطابور لمحاولة لاحقة — لا تُبلَّغ للمستخدم */
+  }
+}
+
 export function triggerChannexSync(companyId) {
   if (!companyId) return
   if (!supabase?.functions?.invoke) {

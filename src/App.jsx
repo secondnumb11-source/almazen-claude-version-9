@@ -52,6 +52,7 @@ import { runDailyNotificationChecks } from './lib/notifications'
 import DataSearch from './components/DataSearch'
 import { markPageStart, markPageEnd, prefetchPage } from './lib/perfKit'
 import { getOfflineQueue, syncOfflineQueue } from './lib/offlineManager'
+import { drainChannexQueue } from './lib/channexSync'
 
 /** مفاتيح صفحات النظام المحاسبي — تُستخدم لبوابة صلاحية واحدة بدل شرط لكل صفحة. */
 const ACCT_PAGES = new Set([
@@ -94,6 +95,15 @@ function Shell() {
   const [collapsed, setCollapsed] = useState(false)
   const [dashEditMode, setDashEditMode] = useState(false)
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
+
+  // تفريغ طابور المزامنة مع منصات الحجز عند بدء الجلسة، ثم كل ربع ساعة
+  // ما دام المستخدم داخل النظام — يُغني عن جدولة خادمية تتطلب مفتاح خدمة.
+  useEffect(() => {
+    if (!profile?.company_id) return
+    drainChannexQueue(profile.company_id)
+    const t = setInterval(() => drainChannexQueue(profile.company_id), 15 * 60 * 1000)
+    return () => clearInterval(t)
+  }, [profile?.company_id])
 
   // قياس زمن فتح كل قسم فعلياً — يُخزَّن في ci_perf_samples ويظهر في
   // لوحة أداء السوبر أدمن كأرقام حقيقية بدل انطباعات عن البطء.
