@@ -87,7 +87,7 @@ export default function Login({ onBack }) {
     window.location.href = `/portal/${data}`
   }
 
-  const login = async (emails) => {
+  const login = async (emails, { staff = false } = {}) => {
     const candidates = Array.isArray(emails) ? emails : [emails]
     if (!candidates[0] || !f.pass) return showError({ message: 'أدخل بيانات الدخول كاملة.' })
     clearFeedback(); setBusy(true)
@@ -99,6 +99,12 @@ export default function Login({ onBack }) {
       if (!/invalid login credentials/i.test(error.message || '')) break
     }
     setBusy(false)
+    // البوابة الخطأ تُنتج نفس خطأ «بيانات غير صحيحة»، فيظن المستخدم أن كلمة
+    // مروره خاطئة. بوابة الموظف تُلحق @staff.almazen.app باسم المستخدم، فحساب
+    // المالك — الذي يدخل ببريده — يفشل فيها دائماً مهما كانت كلمة المرور صحيحة.
+    if (lastError && staff && /invalid login credentials/i.test(lastError.message || '')) {
+      return showError({ message: 'تعذّر الدخول من هذه البوابة. إن كان حسابك حساب المالك فادخل من «بوابة المالك (الرئيسية)» ببريدك الإلكتروني — لا باسم مستخدم. أما الموظف والمحاسب فيدخلان باسم المستخدم الذي أنشأته لهما المنشأة.' })
+    }
     if (lastError) showError(lastError)
   }
 
@@ -439,7 +445,14 @@ export default function Login({ onBack }) {
                 <button className="forgot-link" type="button" disabled={busy} onClick={() => { setForgot(true); setF({ ...f, resetEmail: f.email }) }}>نسيت كلمة السر؟</button>
               </form>
             ) : (
-              <form onSubmit={(e) => { e.preventDefault(); login(staffEmailCandidates(f.user)) }}>
+              <form onSubmit={(e) => {
+                e.preventDefault()
+                // بريد إلكتروني في حقل اسم المستخدم = بوابة خطأ. نوجّه بدل أن نفشل.
+                if (f.user.includes('@')) {
+                  return showError({ message: 'أدخلت بريداً إلكترونياً، وهذه البوابة تقبل اسم المستخدم فقط. حسابات البريد الإلكتروني تدخل من «بوابة المالك (الرئيسية)».' })
+                }
+                login(staffEmailCandidates(f.user), { staff: true })
+              }}>
                 <div className="fld"><label>اسم المستخدم</label>
                   <input value={f.user} autoFocus autoComplete="username" onChange={e => setF({ ...f, user: e.target.value })} placeholder="ahmad.s" dir="ltr" /></div>
                 <div className="fld"><label>كلمة المرور</label>
