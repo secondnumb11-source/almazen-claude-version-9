@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from './lib/supabase'
 
 const Ctx = createContext(null)
@@ -13,8 +13,11 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [toasts, setToasts] = useState([])
 
+  // Date.now() وحده يتكرر حين يصدر إشعاران في نفس الميلي ثانية: مفتاح React
+  // مكرر، ومؤقّت الإخفاء يحذف الإشعارين معاً فيختفي أحدهما قبل قراءته.
+  const toastSeq = useRef(0)
   const toast = useCallback((msg, err = false) => {
-    const id = Date.now()
+    const id = `${Date.now()}-${++toastSeq.current}`
     setToasts(t => [...t, { id, msg, err }])
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 4500)
   }, [])
