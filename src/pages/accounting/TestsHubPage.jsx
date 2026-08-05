@@ -156,6 +156,20 @@ const SUITES = [
     fix: async () => { throw new Error('يُصلَح بإعادة جدولة المهمة من ملف CRON_SYSTEM_RUN_FIX.sql') },
   },
   {
+    id: 'docs', label: 'المستندات المرفوعة وسلامة حفظها', icon: '📎',
+    desc: 'مستند يُرفع ويُعرض «تم الحفظ» ثم يختفي هو أسوأ من رفض الرفع. يفحص وجود كل عمود تكتب فيه واجهات الرفع، والروابط التي تشير إلى ملف غير موجود، والملفات المرفوعة بلا أي مرجع في قاعدة البيانات.',
+    superOnly: true,
+    run: async () => {
+      const { data, error } = await supabase.rpc('ci_document_checks')
+      if (error) throw new Error(error.message)
+      return (data || []).map(r => ({
+        code: r.o_suite, title: r.o_name, status: r.o_status,
+        detail: r.o_message, fixable: false,
+      }))
+    },
+    fix: async () => { throw new Error('يُصلَح بتطبيق CUSTOMER_DOC_VAULT_FIX.sql') },
+  },
+  {
     id: 'ops', label: 'الوحدات والحجوزات وحالات التشغيل', icon: '🏢',
     desc: 'حجز يبقى «مُسجَّل دخول» بعد تاريخ خروجه يُبقي الوحدة محجوزة بلا سبب ويُفسد تقارير الإشغال. يفحص أيضاً تعارض حالات الوحدات وتداخل الحجوزات ووحدات الاختبار.',
     superOnly: true,

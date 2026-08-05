@@ -67,15 +67,21 @@ export default function CustomerDocVault({ customer, onUpdated }) {
         .eq('id', customer.id)
 
       if (errCol) {
-        // Fallback: Embed inside notes field if column not created
+        // المسار الاحتياطي: تضمين الأرشيف داخل الملاحظات إن تعذّر العمود
         let currentNotes = customer.notes || ''
         currentNotes = currentNotes.replace(/\[DOCUMENTS:.*?\]/g, '').trim()
         const updatedNotes = `${currentNotes} [DOCUMENTS:${jsonStr}]`.trim()
 
-        await supabase
+        const { error: errNotes } = await supabase
           .from('customers')
           .update({ notes: updatedNotes })
           .eq('id', customer.id)
+
+        // لا نُظهر نجاحاً كاذباً: إن فشل المساران فالمستند لم يُحفظ
+        if (errNotes) {
+          setDocs(docs)
+          return toast('تعذّر حفظ الأرشيف: ' + (errCol.message || errNotes.message), true)
+        }
       }
 
       if (onUpdated) onUpdated()
