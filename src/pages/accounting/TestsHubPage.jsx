@@ -124,6 +124,24 @@ const SUITES = [
     },
   },
   {
+    id: 'defaults', label: 'اكتمال الإعداد المحاسبي والمستندات', icon: '🧩',
+    desc: 'الحساب الافتراضي غير المحدَّد يجعل الترحيل التلقائي يتخطى حالات بصمت، والمصروف بلا سند يترك المراجع بلا مستند يطبعه. الإصلاح ينشئ الناقص لكل المنشآت دون المساس بما حدّدته بنفسك.',
+    superOnly: true,
+    run: async () => {
+      const { data, error } = await supabase.rpc('ci_defaults_checks')
+      if (error) throw new Error(error.message)
+      return (data || []).map(r => ({
+        code: r.o_suite, title: r.o_name, status: r.o_status,
+        detail: r.o_message, fixable: !!r.o_fix, fixKey: r.o_fix,
+      }))
+    },
+    fix: async (cid, code, row) => {
+      const { data, error } = await supabase.rpc('ci_apply_fix_to_all_users', { _check_id: row.fixKey })
+      if (error) throw new Error(error.message)
+      return data
+    },
+  },
+  {
     id: 'posting', label: 'اكتمال ترحيل المستندات', icon: '📌',
     desc: 'يتأكد أن كل مصروف ودفعة لها قيد محاسبي — وهو الخلل الذي أخفى ١٬٨٩٩ ر.س سابقاً.',
     run: async (cid) => {

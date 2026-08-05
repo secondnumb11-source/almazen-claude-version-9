@@ -20,7 +20,10 @@ export default function JournalListPage({ initialEntryId, mode = 'summary' }) {
   const { profile, company } = useAuth()
   const cid = profile?.company_id
 
-  const [openId, setOpenId] = useState(initialEntryId ?? undefined)
+  // ملاحظة دقيقة: ?? يعامل null و undefined سواءً، فكان `null ?? undefined`
+  // يعطي undefined ويفتح القائمة بدل محرّر القيد الجديد. التمييز صريح هنا:
+  //   undefined = اعرض القائمة    |    null = افتح محرّراً لقيد جديد
+  const [openId, setOpenId] = useState(initialEntryId === undefined ? undefined : initialEntryId)
   const [rows, setRows] = useState([])
   const [from, setFrom] = useState(monthStart)
   const [to, setTo] = useState(today)
