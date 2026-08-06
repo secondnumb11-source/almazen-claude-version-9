@@ -170,6 +170,96 @@ const SUITES = [
     fix: async () => { throw new Error('يُصلَح بتطبيق CUSTOMER_DOC_VAULT_FIX.sql') },
   },
   {
+    id: 'speed', label: 'سرعة النظام — قياس زمن فعلي', icon: '⏱️',
+    desc: 'يقيس زمن التنفيذ الحقيقي بالمللي ثانية للاستعلامات التي تفتحها الصفحات الثقيلة، على أكبر منشأة بيانات. عدّ المسوحات التسلسلية وحده لا يقيس البطء: PostgreSQL يمسح الجداول الصغيرة تسلسلياً عمداً لأنه أسرع من الفهرس. زر التسريع يحدّث إحصاءات المخطِّط ويُنشئ فهارس على الجداول الكبيرة فقط، ويُعيد عدد ما نفّذه — ولا يلمس بيانات ولا سياسات.',
+    superOnly: true,
+    run: async () => {
+      const { data, error } = await supabase.rpc('ci_speed_test')
+      if (error) throw new Error(error.message)
+      return (data || []).map(r => ({
+        code: 'speed', title: r.o_name, status: r.o_status,
+        detail: `${r.o_ms} مللي (الميزانية ${r.o_budget_ms}) — ${r.o_detail}`,
+        fixable: r.o_status !== 'pass', fixKey: 'speed_optimize',
+      }))
+    },
+    fix: async () => {
+      const { data, error } = await supabase.rpc('speed_optimize')
+      if (error) throw new Error(error.message)
+      const rows = data || []
+      if (!rows.length) return 'لم يُنفَّذ أي تغيير'
+      return rows.map(r => `${r.o_action}: ${r.o_affected} — ${r.o_detail}`).join(' · ')
+    },
+  },
+  {
+    id: 'services', label: 'الخدمات وقابليتها للترحيل المحاسبي', icon: '🧾',
+    desc: 'خدمة بلا حساب مرتبط لا تجد أين تُرحَّل حين تُستخدم في فاتورة أو قيد، فتنكسر السلسلة بصمت. يفحص كل المنشآت: خدمات بلا حساب، وارتباطات تشير لحساب مفقود أو من منشأة أخرى، وجاهزية الحسابات الافتراضية. زر الإصلاح يربط كل خدمة بحساب منشأتها الافتراضي ويُعيد العدد الفعلي.',
+    superOnly: true,
+    run: async () => {
+      const { data, error } = await supabase.rpc('ci_services_checks')
+      if (error) throw new Error(error.message)
+      return (data || []).map(r => ({
+        code: r.o_suite, title: r.o_name, status: r.o_status,
+        detail: r.o_message, fixable: !!r.o_fix, fixKey: r.o_fix,
+      }))
+    },
+    fix: async (cid, code, row) => {
+      if (row?.fixKey === 'acct_complete_defaults') {
+        const { data, error } = await supabase.rpc('acct_complete_defaults')
+        if (error) throw new Error(error.message)
+        return `أُكملت الحسابات الافتراضية: ${JSON.stringify(data)}`
+      }
+      const { data, error } = await supabase.rpc('services_link_accounts')
+      if (error) throw new Error(error.message)
+      const r = (data || [])[0]
+      return r ? `${r.o_action}: ${r.o_affected} — ${r.o_detail}` : 'لم يُنفَّذ أي تغيير'
+    },
+  },
+  {
+    id: 'speed', label: 'سرعة النظام — قياس زمن فعلي', icon: '⏱️',
+    desc: 'يقيس زمن التنفيذ الحقيقي بالمللي ثانية لأثقل استعلامات النظام على أكبر منشأة بيانات — لا عدد مسوحات ولا تقديرات. زر الإصلاح يُحدّث إحصاءات المخطِّط ويُنشئ فهارس على الجداول الكبيرة فقط، ويسري على كل المنشآت الحالية والجديدة. لا يلمس بيانات ولا سياسات.',
+    superOnly: true,
+    run: async () => {
+      const { data, error } = await supabase.rpc('ci_speed_test')
+      if (error) throw new Error(error.message)
+      return (data || []).map(r => ({
+        code: 'speed', title: r.o_name, status: r.o_status,
+        detail: `${r.o_ms} مللي (الميزانية ${r.o_budget_ms}) — ${r.o_detail}`,
+        fixable: r.o_status !== 'pass', fixKey: 'speed_optimize',
+      }))
+    },
+    fix: async () => {
+      const { data, error } = await supabase.rpc('speed_optimize')
+      if (error) throw new Error(error.message)
+      // يُعاد ما نُفِّذ فعلاً — إن كان صفراً يُقال صفراً، بلا ادعاء تسريع
+      return (data || []).map(r => `${r.o_action}: ${r.o_affected} — ${r.o_detail}`).join(' | ')
+        || 'لم يُنفَّذ أي تغيير'
+    },
+  },
+  {
+    id: 'services', label: 'ترحيل الخدمات إلى شجرة الحسابات', icon: '🧾',
+    desc: 'خدمة بلا حساب مرتبط لا تجد أين تُرحَّل حين تُستخدم في فاتورة أو قيد، فتنكسر السلسلة بصمت. يفحص كل المنشآت، وزر الإصلاح يربط الخدمات غير المرتبطة بالحساب الافتراضي لمنشأتها ويُعيد عدد ما ربطه فعلاً.',
+    superOnly: true,
+    run: async () => {
+      const { data, error } = await supabase.rpc('ci_services_checks')
+      if (error) throw new Error(error.message)
+      return (data || []).map(r => ({
+        code: r.o_suite, title: r.o_name, status: r.o_status,
+        detail: r.o_message, fixable: !!r.o_fix, fixKey: r.o_fix,
+      }))
+    },
+    fix: async (cid, code, row) => {
+      if (row?.fixKey === 'acct_complete_defaults') {
+        const { data, error } = await supabase.rpc('acct_complete_defaults')
+        if (error) throw new Error(error.message)
+        return `إكمال الحسابات الافتراضية: ${JSON.stringify(data)}`
+      }
+      const { data, error } = await supabase.rpc('services_link_accounts')
+      if (error) throw new Error(error.message)
+      const r = (data || [])[0]
+      return r ? `${r.o_action}: ${r.o_affected} — ${r.o_detail}` : 'لم يُنفَّذ أي تغيير'
+    },
+  },
+  {
     id: 'isolation', label: 'تدقيق العزل البنيوي بين المنشآت', icon: '🔐',
     desc: 'العزل لا يُقاس بمقارنة صفوف من جلسة سوبر أدمن — فالسياسات تمنحه رؤية الجميع عمداً، فيظهر إنذار كاذب. هذا التدقيق يقيس البنية نفسها: تفعيل RLS، وجود سياسة قراءة لكل جدول، سياسات متساهلة بلا شرط منشأة، صفوف يتيمة بلا منشأة، وفهرسة عمود الربط. وزر الإصلاح يُنفّذ تغييراً فعلياً ويُعيد عدد ما غيّره.',
     superOnly: true,

@@ -83,6 +83,13 @@ export default function ServicesPage({ initialCategory, initialCode, focusRecord
   }), [shown])
 
   const doSave = async (s) => {
+    // خدمة بلا حساب مرتبط لن تجد أين تُرحَّل حين تُستخدم في فاتورة أو قيد،
+    // فتُكسر سلسلة الترحيل بصمت. المنع هنا في الواجهة لا في قاعدة البيانات
+    // حتى لا نُبطل صفوفاً قائمة أو مسارات حفظ على مرحلتين.
+    if (!s.income_account_id && !s.expense_account_id) {
+      setErr('اختر حساب الإيراد أو حساب المصروف — الخدمة بلا حساب لا يمكن ترحيلها إلى دفتر الأستاذ.')
+      return
+    }
     setBusy(true); setErr('')
     try { await saveService(cid, s); setEdit(null); setOk('حُفظت الخدمة'); await load() }
     catch (e) { setErr(e.message) } finally { setBusy(false) }
