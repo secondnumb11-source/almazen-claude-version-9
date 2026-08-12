@@ -326,7 +326,14 @@ function Requests({ b, token, notify, reload }) {
           const path = `${token}/${Date.now()}_${file.name.replace(/[^\w.-]/g, '_')}`
           const { error: upErr } = await supabase.storage.from('portal-uploads').upload(path, file)
           if (upErr) throw upErr
-          photoUrl = supabase.storage.from('portal-uploads').getPublicUrl(path).data.publicUrl
+          // سطل portal-uploads صار خاصاً: صور طلبات الصيانة بيانات شخصية للمستأجر،
+          // وكان الرابط العام يفتحها لأي شخص يملكه بلا تسجيل دخول. الرابط الموقّع
+          // يحمل صلاحية محدودة المدة بدل الإتاحة الدائمة للعموم.
+          const { data: signed, error: signErr } = await supabase.storage
+            .from('portal-uploads')
+            .createSignedUrl(path, 60 * 60 * 24 * 365)
+          if (signErr) throw signErr
+          photoUrl = signed.signedUrl
         } catch (e) {
           notify('تم إرسال الطلب بدون الصورة (تعذّر رفعها): ' + e.message)
         }
