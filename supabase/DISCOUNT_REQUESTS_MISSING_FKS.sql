@@ -38,6 +38,16 @@ ALTER TABLE public.discount_requests
   ADD CONSTRAINT discount_requests_requested_by_fkey
   FOREIGN KEY (requested_by) REFERENCES public.profiles(id);
 
--- فهرس على عمود الربط كي لا يُبطئ المفتاح الجديد عمليات الحذف على الأب.
-CREATE INDEX IF NOT EXISTS idx_discount_requests_booking_id
-  ON public.discount_requests (booking_id);
+-- فهارس تغطية المفاتيح الجديدة كي لا تُبطئ عمليات الحذف على الأب.
+--
+-- ملاحظة تصحيحية: النسخة الأولى من هذا الملف أنشأت
+-- idx_discount_requests_booking_id، وتبيّن بمدقّق الأداء أن
+-- ix_discount_requests_booking_id موجود أصلاً بنفس التعريف حرفياً، فاختلاف
+-- الاسم أبطل أثر IF NOT EXISTS وأنتج فهرسين متطابقين (duplicate_index: 0 ← 1).
+-- الصواب: الاكتفاء بالفهرس القائم على booking_id، وإضافة فهرس requested_by
+-- الذي كان ناقصاً (unindexed_foreign_keys: 32 ← 33).
+-- بعد التصحيح عاد المدقّق إلى duplicate_index = 0 و unindexed_foreign_keys = 32.
+
+-- booking_id مغطّى مسبقاً بـ ix_discount_requests_booking_id — لا حاجة لفهرس جديد.
+CREATE INDEX IF NOT EXISTS ix_discount_requests_requested_by
+  ON public.discount_requests (requested_by);
