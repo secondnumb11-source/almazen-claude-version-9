@@ -46,11 +46,24 @@ const FROM = Deno.env.get('EMAIL_FROM') ?? 'المازن <onboarding@resend.dev>
 
 const norm = (e: unknown) => String(e ?? '').trim().toLowerCase()
 
-/** يبني قائمة المستلمين النهائية: السوبر أدمن + الواردون − المستبعدون، بلا تكرار. */
-function buildRecipients(extra: unknown): string[] {
-  const incoming = Array.isArray(extra) ? extra : []
+/**
+ * يبني قائمة المستلمين النهائية: إدارة المنصة − المستبعدون، بلا تكرار.
+ *
+ * ⚠️ إصلاح أمني 2026-08-12 — إغلاق مُرحِّل بريد مفتوح:
+ *   كانت الدالة تدمج مصفوفة recipients القادمة من جسم الطلب في قائمة الإرسال.
+ *   و verify_jwt على دوال Edge يقبل مفتاح anon العام — وهو مضمَّن في حزمة
+ *   المتصفح ومتاح لأي زائر — وقد أُثبت ذلك بتجربة حيّة: طلب يحمل مفتاح anon
+ *   وحده تجاوز التحقق ووصل إلى منطق الدالة.
+ *   النتيجة: أي شخص على الإنترنت كان يستطيع إرسال بريد من الدومين الموثّق
+ *   إلى أي عنوان يختاره وبمحتوى يتحكم في أجزاء منه — انتحال وإفساد سمعة
+ *   الدومين.
+ *   الإصلاح: تُتجاهل recipients الواردة تماماً. الوجهة حصراً إدارة المنصة،
+ *   وهو الغرض المعلن للدالة أصلاً. بريد تفعيل حساب المستخدم الجديد يُرسَل من
+ *   دالة auth-email المنفصلة ولا يعتمد على هذه إطلاقاً.
+ */
+function buildRecipients(_extra: unknown): string[] {
   const excluded = new Set(EXCLUDED_EMAILS.map(norm))
-  return [...new Set([...SUPER_ADMIN_EMAILS, ...incoming].map(norm))]
+  return [...new Set(SUPER_ADMIN_EMAILS.map(norm))]
     .filter((e) => e.includes('@') && !excluded.has(e))
 }
 
