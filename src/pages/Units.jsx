@@ -74,7 +74,7 @@ export default function Units() {
             .select('unit_id,url,media_type,sort_order')
             .in('unit_id', ids).eq('media_type', 'image').order('sort_order'),
           supabase.from('bookings')
-            .select('unit_id,check_in_date,check_out_date,status,ejar_status,ejar_contract_number,booking_source,guests(full_name),customers(full_name),paid,total_amount,notes,base_price,discount_percent,discount_amount')
+            .select('unit_id,check_in_date,check_out_date,status,ejar_status,ejar_contract_number,booking_source,customers(full_name),payments(amount),total_amount,notes,base_price,discount_percent,discount_amount')
             .in('unit_id', ids).in('status', ['confirmed', 'checked_in']),
           supabase.from('maintenance_requests')
             .select('unit_id').in('unit_id', ids).in('status', ['open', 'in_progress']),
@@ -94,7 +94,14 @@ export default function Units() {
 
         const bk = bkRes?.data
         const a = {}
-        ;(bk || []).forEach(b => { a[b.unit_id] = b })
+        // «المدفوع» حقل محسوب لا عمود في bookings — نفس تعريف portal_get_context:
+        // مجموع payments.amount لهذا الحجز.
+        ;(bk || []).forEach(b => {
+          a[b.unit_id] = {
+            ...b,
+            paid: (b.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0),
+          }
+        })
         setActiveBk(a)
 
         const tk = tkRes?.data

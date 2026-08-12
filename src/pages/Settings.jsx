@@ -15,6 +15,26 @@ import BranchFeatureAdmin from '../components/admin/BranchFeatureAdmin'
 
 import { runDailyNotificationChecks } from '../lib/notifications'
 
+/** حالات اعتماد ZATCA كما تعيدها zatca_credentials.onboarding_status. */
+const ZATCA_STATUS = {
+  not_started: 'لم يبدأ الاعتماد بعد',
+  csr_generated: 'تم توليد طلب الشهادة — التالي: إدخال رمز OTP',
+  compliance_passed: 'اجتاز الامتثال — التالي: الترقية إلى شهادة الإنتاج',
+  production_ready: '✅ جاهز للإرسال الفعلي للهيئة',
+  failed: '⚠️ فشل — راجع الخطأ أدناه وأعد المحاولة',
+}
+
+/** ترجمة رموز أخطاء دالة الربط إلى رسائل تُفهم دون تخمين. */
+const ZATCA_ERR = {
+  VAT_NUMBER_REQUIRED: 'الرقم الضريبي للمنشأة مطلوب — أدخله في تبويب «بيانات المنشأة» أولاً',
+  NO_CREDENTIALS_GENERATE_CSR_FIRST: 'ولّد طلب الشهادة (CSR) أولاً',
+  OTP_REQUIRED: 'رمز OTP من بوابة Fatoora مطلوب',
+  NOT_PRODUCTION_READY: 'لم تكتمل شهادة الإنتاج لهذه الجهة بعد',
+  FORBIDDEN_ROLE: 'إدارة الربط الضريبي متاحة للمالك أو المدير فقط',
+  COMPANY_MISMATCH: 'لا صلاحية لك على هذه المنشأة',
+  AUTH_REQUIRED: 'انتهت الجلسة — سجّل الدخول مرة أخرى',
+}
+
 const CRUD_TABLES = [
   { table: 'units', title: '🏢 الوحدات', fields: [
     { key: 'name', label: 'الاسم', type: 'text', required: true },
@@ -88,6 +108,10 @@ function SettingsPanel({ dashEditMode, setDashEditMode }) {
   const [tab, setTab] = useState('company')
   const [c, setC] = useState(company || {})
   const [zatca, setZatca] = useState({ zatca_api_key: '', zatca_environment: 'sandbox' })
+  // حالة اعتماد المرحلة الثانية لهذه الجهة — تُقرأ من zatca_credentials
+  const [zc, setZc] = useState(null)
+  const [zBusy, setZBusy] = useState('')
+  const [zOtp, setZOtp] = useState('')
 
   useEffect(() => setC(company || {}), [company])
   // بيانات الربط مع ZATCA تُخزَّن في جدول company_secrets المقيّد بالدور (لا على صف الشركة)
@@ -134,6 +158,33 @@ function SettingsPanel({ dashEditMode, setDashEditMode }) {
         { onConflict: 'company_id' })
     if (error) return toast(explain(error), true)
     toast('✓ حُفظت إعدادات الربط مع ZATCA')
+  }
+
+  // ---- اعتماد المرحلة الثانية: كل مدير يربط منشأته من حسابه ----
+  const loadZc = async () => {
+    if (!profile?.company_id) return
+    const { data } = await supabase.from('zatca_credentials')
+      .select('*').eq('company_id', profile.company_id).is('branch_id', null).maybeSingle()
+    setZc(data || null)
+  }
+  useEffect(() => { loadZc() /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [profile])
+
+  /** يستدعي دالة الربط الرسمية. كل الأخطاء تُعرض كما وردت من الهيئة بلا تجميل. */
+  const zatcaCall = async (action, extra = {}) => {
+    setZBusy(action)
+    try {
+      const { data, error } = await supabase.functions.invoke('zatca-einvoice', {
+        body: { action, company_id: profile.company_id, environment: zatca.zatca_environment, ...extra },
+      })
+      if (error) throw new Error(error.message || 'فشل الاستدعاء')
+      if (data?.error) throw new Error(ZATCA_ERR[data.error] || data.error)
+      toast(data?.note ? '✓ تم — ' + data.note : '✓ تمت العملية بنجاح')
+      await loadZc()
+    } catch (e) {
+      toast('تعذّر: ' + e.message, true)
+    } finally {
+      setZBusy('')
+    }
   }
 
   const saveEmail = () => {
@@ -256,6 +307,58 @@ function SettingsPanel({ dashEditMode, setDashEditMode }) {
               <input type="password" value={zatca.zatca_api_key} onChange={e => setZatca({ ...zatca, zatca_api_key: e.target.value })} dir="ltr" /></div>
           </div>
           <button className="btn btn-green btn-sm" onClick={saveZatca}>حفظ إعدادات ZATCA</button>
+
+          <h3 style={{ marginTop: 22 }}>اعتماد المرحلة الثانية — الربط المباشر</h3>
+          <div className="settings-hint">
+            الاعتماد خاص بمنشأتك وحدها: الشهادة تُحفظ باسم منشأتك ولا تُخلط بأي منشأة أخرى.
+            نفّذ الخطوات بالترتيب. تحتاج رمز OTP من حسابك في بوابة ZATCA (Fatoora).
+            {!company?.vat_number && (
+              <div style={{ color: '#b45309', marginTop: 8 }}>
+                ⚠️ الرقم الضريبي لمنشأتك غير مُدخل. أدخله في تبويب «بيانات المنشأة» أولاً —
+                فبدونه لا يُقبل طلب الشهادة، ولا يحمل رمز QR هويتك الضريبية الصحيحة.
+              </div>
+            )}
+          </div>
+
+          <div className="settings-hint" style={{ marginTop: 8 }}>
+            <b>الحالة الحالية:</b> {ZATCA_STATUS[zc?.onboarding_status] || 'لم يبدأ الاعتماد بعد'}
+            {zc?.environment ? ` · البيئة: ${zc.environment}` : ''}
+            {zc?.last_error ? <div style={{ color: '#b91c1c', marginTop: 6 }}>آخر خطأ: {zc.last_error}</div> : null}
+          </div>
+
+          <div className="grid2" style={{ marginTop: 10 }}>
+            <div className="fld">
+              <label>1) طلب توقيع الشهادة</label>
+              <button
+                className="btn btn-gold btn-sm"
+                disabled={!!zBusy || !company?.vat_number}
+                onClick={() => zatcaCall('generate_csr')}
+              >
+                {zBusy === 'generate_csr' ? 'جارٍ التوليد…' : 'توليد طلب الشهادة (CSR)'}
+              </button>
+            </div>
+            <div className="fld">
+              <label>2) رمز OTP من بوابة Fatoora</label>
+              <input value={zOtp} onChange={e => setZOtp(e.target.value)} dir="ltr" placeholder="123456" />
+              <button
+                className="btn btn-gold btn-sm"
+                style={{ marginTop: 6 }}
+                disabled={!!zBusy || !zOtp || !zc?.csr}
+                onClick={() => zatcaCall('compliance_csid', { otp: zOtp.trim() })}
+              >
+                {zBusy === 'compliance_csid' ? 'جارٍ الاعتماد…' : 'اعتماد شهادة الامتثال'}
+              </button>
+            </div>
+          </div>
+
+          <button
+            className="btn btn-green btn-sm"
+            style={{ marginTop: 10 }}
+            disabled={!!zBusy || zc?.onboarding_status !== 'compliance_passed'}
+            onClick={() => zatcaCall('production_csid')}
+          >
+            {zBusy === 'production_csid' ? 'جارٍ الترقية…' : '3) ترقية إلى شهادة الإنتاج'}
+          </button>
         </div>
       )}
 
