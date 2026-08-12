@@ -29,8 +29,14 @@ function generateZatcaQrTlv(sellerName, vatNo, timestamp, totalWithVat, vatTotal
     return buf
   }
   try {
-    const t1 = encodeTLV(1, sellerName || 'مجموعة المازن الفندقية')
-    const t2 = encodeTLV(2, vatNo || '310023456700003')
+    // ⚠️ لا قيم احتياطية هنا إطلاقاً. كانت الشيفرة تُدرج اسم منشأة ورقماً
+    // ضريبياً مثبَّتين عند غياب بيانات المنشأة، فتصدر فاتورة تحمل في رمز QR
+    // هويةَ منشأة أخرى — انتحال هوية ضريبية ومخالفة نظامية مباشرة، وكان
+    // يقع فعلياً على 13 منشأة من 17 لا رقم ضريبي لها.
+    // الوسم الفارغ نقص ظاهر يكشفه القارئ الرسمي، أما القيمة المنتحَلة فتمرّ
+    // صامتة وتُنسب الفاتورة لغير صاحبها.
+    const t1 = encodeTLV(1, sellerName || '')
+    const t2 = encodeTLV(2, vatNo || '')
     const t3 = encodeTLV(3, timestamp || new Date().toISOString())
     const t4 = encodeTLV(4, String(Number(totalWithVat || 0).toFixed(2)))
     const t5 = encodeTLV(5, String(Number(vatTotal || 0).toFixed(2)))
