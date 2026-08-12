@@ -57,7 +57,7 @@ export async function runChannexDiagnostics(companyId) {
 
     // Test 3: Verify Accounting Double-Entry Linking
     log('اختبار 3: التحقق من وجود شجرة الحسابات والربط المحاسبي المزدوج')
-    const { data: chart } = await supabase.from('chart_of_accounts').select('id, account_code').limit(5)
+    const { data: chart } = await supabase.from('chart_of_accounts').select('id, code').limit(5)
     if (chart) {
       log(`تم التحقق من ربط شجرة الحسابات (${chart.length} حسابات نشطة مختبرة)`, true)
     } else {
