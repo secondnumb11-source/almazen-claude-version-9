@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { supabase, adminSignupClient, staffEmail, normalizeStaffUsername } from '../lib/supabase'
 import { useAuth } from '../AuthContext'
-import { SAR, num, today, ROLES, uploadFile } from '../lib/helpers'
+import { SAR, num, today, ROLES, uploadFile, openStoredDocument } from '../lib/helpers'
 import VoucherPrintModal from '../components/VoucherPrint'
 import PrintableDoc, { DocGrid } from '../components/PrintableDoc'
 
@@ -367,8 +367,14 @@ function EmployeeProfile({ employee, perms, canEdit, onClose, onChanged }) {
         <div className="modal-b">
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
             <button className="btn btn-blue btn-sm" onClick={() => setShowReport(true)}>🖨 طباعة تقرير الموظف الشامل</button>
-            {employee.id_photo_url && <a className="btn btn-ghost btn-sm" href={employee.id_photo_url} target="_blank" rel="noreferrer">🪪 عرض الهوية/الإقامة</a>}
-            {employee.contract_url && <a className="btn btn-ghost btn-sm" href={employee.contract_url} target="_blank" rel="noreferrer">📄 عرض عقد العمل</a>}
+            {employee.id_photo_url && <button type="button" className="btn btn-ghost btn-sm" onClick={() => openStoredDocument(supabase, employee.id_photo_url, {
+              onError: message => toast(message, true),
+              context: { area: 'employee_profile', employee_id: employee.id, document_kind: 'identity' },
+            })}>🪪 عرض الهوية/الإقامة</button>}
+            {employee.contract_url && <button type="button" className="btn btn-ghost btn-sm" onClick={() => openStoredDocument(supabase, employee.contract_url, {
+              onError: message => toast(message, true),
+              context: { area: 'employee_profile', employee_id: employee.id, document_kind: 'work_contract' },
+            })}>📄 عرض عقد العمل</button>}
           </div>
 
           <h4 className="ts-h4">البيانات الشخصية والوظيفية</h4>

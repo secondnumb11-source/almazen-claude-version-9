@@ -12,6 +12,15 @@ import { FlaskConical, Play, Wrench, ShieldCheck } from 'lucide-react'
   قاعدة البيانات ويُعاد الفحص بعده مباشرةً لإثبات النتيجة.
 */
 
+/*
+  دوال RPC للفحص تُعيد ثلاث حالات: pass / warn / fail.
+  عرضها كحالتين فقط كان يصبغ كل `warn` باللون الأحمر ووسم «خطأ» بينما
+  عدّاد «يحتاج إصلاح» يحسب `fail` وحده — فتظهر لوحة تقول «سليم 3 · يحتاج
+  إصلاح 0» وفيها صف أحمر. ثلاث حالات صريحة تُنهي هذا التناقض.
+*/
+const STATUS_LABEL = s => (s === 'pass' ? 'سليم' : s === 'warn' ? 'تنبيه' : 'خطأ')
+const STATUS_CLASS = s => (s === 'pass' ? 'ok' : s === 'warn' ? 'warn' : 'bad')
+
 /* حزم الاختبار القائمة في النظام — تُعرض هنا بدل تناثرها في تبويبات الصفحات */
 const AccountingIntegrityTool = lazy(() => import('../../components/AccountingIntegrityTool'))
 const UnitStatusTransitionTests = lazy(() => import('../../components/UnitStatusTransitionTests'))
@@ -371,6 +380,8 @@ export default function TestsHubPage() {
   }
 
   const failCount = (rows || []).filter(r => r.status === 'fail').length
+  const warnCount = (rows || []).filter(r => r.status === 'warn').length
+  const passCount = (rows || []).filter(r => r.status === 'pass').length
   const fixableCount = (rows || []).filter(r => r.status === 'fail' && r.fixable).length
 
   return (
@@ -381,7 +392,7 @@ export default function TestsHubPage() {
       tools={rows?.length ? (
         <>
           <ExcelButton filename={`نتائج-${suite?.label}.xlsx`} sheet="نتائج الفحص"
-            rows={rows.map(r => ({ 'الرمز': r.code, 'الفحص': r.title, 'النتيجة': r.status === 'pass' ? 'سليم' : 'خطأ', 'التفصيل': r.detail || '' }))}
+            rows={rows.map(r => ({ 'الرمز': r.code, 'الفحص': r.title, 'النتيجة': STATUS_LABEL(r.status), 'التفصيل': r.detail || '' }))}
             onError={setErr} />
           <PrintButton docKind="report" targetId="tests-print" title={`${suite?.label} — ${company?.name || ''}`} />
         </>
@@ -434,7 +445,8 @@ export default function TestsHubPage() {
         <>
           <div className="acct-kpis">
             <div><span>إجمالي الفحوص</span><b>{rows.length}</b></div>
-            <div><span>سليم</span><b style={{ color: '#065F46' }}>{rows.length - failCount}</b></div>
+            <div><span>سليم</span><b style={{ color: '#065F46' }}>{passCount}</b></div>
+            <div><span>تنبيه</span><b style={{ color: '#92400E' }}>{warnCount}</b></div>
             <div className={failCount ? 'due' : ''}><span>يحتاج إصلاح</span><b>{failCount}</b></div>
           </div>
 
@@ -446,8 +458,8 @@ export default function TestsHubPage() {
                   <tr key={r.code + i}>
                     <td>{r.code}</td>
                     <td>{r.title}</td>
-                    <td><span className={'acct-badge ' + (r.status === 'pass' ? 'ok' : 'bad')}>
-                      {r.status === 'pass' ? 'سليم' : 'خطأ'}</span></td>
+                    <td><span className={'acct-badge ' + STATUS_CLASS(r.status)}>
+                      {STATUS_LABEL(r.status)}</span></td>
                     <td>{r.detail || '—'}</td>
                     <td className="no-print">
                       {r.status === 'fail' && r.fixable && (
