@@ -17,5 +17,9 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // خادم التطوير يعمل داخل حاوية بعيدة، وتُفتح المعاينة عبر اسم مضيف خارجي.
+  // بدون هذا يردّ Vite بـ 403 "Blocked request. This host is not allowed".
+  // يخصّ خادم التطوير فقط ولا أثر له على البناء أو النشر.
+  vite: { server: { allowedHosts: true } },
   ...(nitroPreset ? { nitro: { preset: nitroPreset } } : {}),
 });
