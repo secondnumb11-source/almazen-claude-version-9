@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Search, X, CornerDownLeft, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../AuthContext'
@@ -67,8 +68,54 @@ export default function DataSearch({ onOpen, variant = 'header', collapsed, onEx
 
   useEffect(() => { setIdx(0) }, [q])
 
+  /*
+    لوحة نتائج الشريط الجانبي تُعرَض عبر بوابة إلى <body>.
+    السبب مُثبت بالتتبّع: legacy.css يضع `.app-sidebar > * { position: relative;
+    z-index: 1 }`، فيصير `.sb-search` سياق تكديس يحبس `z-index: 60` الخاص
+    باللوحة بداخله، ويصير `.sb-nav` شقيقاً لاحقاً بنفس z-index فيُطلى فوقها.
+    اختبار elementFromPoint على أربع نقاط داخل اللوحة أصاب الأربعُ عناصرَ
+    خارجها (sb-digit · sb-nav · sb-item) — أي أن اللوحة كانت غير قابلة للنقر
+    إطلاقاً وتبدو شفافة لأن القائمة تظهر فوقها.
+    و`.app-sidebar` عليه `overflow: hidden`، فأي وضع «بجانب الصندوق» داخل
+    الشجرة كان سيُقصّ. البوابة تحلّ الأمرين معاً بلا مساس بأي قاعدة قائمة.
+  */
+  const resRef = useRef(null)
+  const [pos, setPos] = useState(null)
+
+  const place = useCallback(() => {
+    if (variant !== 'sidebar' || !boxRef.current) return
+    const r = boxRef.current.getBoundingClientRect()
+    const gap = 8
+    const spaceStart = r.left            // فراغ يسار الصندوق
+    const spaceEnd = window.innerWidth - r.right
+    const w = Math.min(360, Math.max(spaceStart, spaceEnd) - gap * 2)
+    // بجانب الصندوق في الجهة الأوسع؛ وإن ضاقت الجهتان يعود تحته
+    if (w >= 240) {
+      const left = spaceStart >= spaceEnd ? r.left - w - gap : r.right + gap
+      const maxTop = window.innerHeight - 340 - 12
+      setPos({ side: true, top: Math.max(12, Math.min(r.top, maxTop)), left, width: w })
+    } else {
+      setPos({ side: false, top: r.bottom + 4, left: r.left, width: r.width })
+    }
+  }, [variant])
+
   useEffect(() => {
-    const onDoc = (e) => { if (boxRef.current && !boxRef.current.contains(e.target)) setOpen(false) }
+    if (!open) { setPos(null); return }
+    place()
+    window.addEventListener('resize', place)
+    window.addEventListener('scroll', place, true)
+    return () => {
+      window.removeEventListener('resize', place)
+      window.removeEventListener('scroll', place, true)
+    }
+  }, [open, place, q])
+
+  useEffect(() => {
+    const onDoc = (e) => {
+      const inBox = boxRef.current && boxRef.current.contains(e.target)
+      const inRes = resRef.current && resRef.current.contains(e.target)
+      if (!inBox && !inRes) setOpen(false)
+    }
     document.addEventListener('mousedown', onDoc)
     return () => document.removeEventListener('mousedown', onDoc)
   }, [])
@@ -119,6 +166,13 @@ export default function DataSearch({ onOpen, variant = 'header', collapsed, onEx
   const wrapCls = variant === 'sidebar' ? 'sb-search' : 'ds-header'
   const boxCls = variant === 'sidebar' ? 'sb-search-box' : 'ds-header-box'
 
+  // نسخة الترويسة تعمل صحيحة داخل الشجرة (مُتحقَّق منها بالتتبّع) فتبقى كما هي.
+  // نسخة الشريط الجانبي وحدها تُنقل إلى <body>. الحارس للتصيير على الخادم.
+  const renderRes = node =>
+    (variant === 'sidebar' && typeof document !== 'undefined')
+      ? createPortal(node, document.body)
+      : node
+
   return (
     <div className={wrapCls} ref={boxRef}>
       <div className={boxCls}>
@@ -137,8 +191,16 @@ export default function DataSearch({ onOpen, variant = 'header', collapsed, onEx
           : <kbd className="sb-search-kbd">Ctrl K</kbd>}
       </div>
 
-      {open && q.trim().length >= 2 && (
-        <div className={variant === 'sidebar' ? 'sb-search-res' : 'ds-res'} role="listbox">
+      {/* نسخة الشريط الجانبي لا تُصيَّر قبل حساب موضعها، وإلا ومضت إطاراً في مكان خاطئ */}
+      {open && q.trim().length >= 2 && (variant !== 'sidebar' || pos) && renderRes(
+        <div
+          ref={resRef}
+          className={variant === 'sidebar' ? 'sb-search-res sb-search-res-fixed' : 'ds-res'}
+          style={variant === 'sidebar' && pos
+            ? { top: pos.top, left: pos.left, width: pos.width }
+            : undefined}
+          role="listbox"
+        >
           {err && <div className="sb-search-empty">تعذّر البحث: {err}</div>}
           {!err && !busy && !flat.length && (
             <div className="sb-search-empty">لا توجد نتائج لـ «{q}» — جرّب رقم الفاتورة أو العقد أو اسم العميل</div>
