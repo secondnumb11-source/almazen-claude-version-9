@@ -77,7 +77,11 @@ async function runChecks(company_id, today) {
           .select('id')
           .eq('booking_id', b.id)
           .eq('event_type', evType)
-          .single();
+          // فحص وجود لا جلب صف مضمون: single() يفشل عند صفر صف (وهي الحالة
+          // الطبيعية هنا) فيُصدر 406، ويفشل أيضاً عند تعدد الصفوف فيصير
+          // existing فارغاً ويُدرَج إشعار مكرر — أي يتعطّل منع التكرار نفسه.
+          .limit(1)
+          .maybeSingle();
           
         if (!existing) {
           await supabase.from('notifications').insert({
@@ -117,7 +121,9 @@ async function runChecks(company_id, today) {
           .select('id')
           .eq('user_id', p.id)
           .eq('event_type', evType)
-          .single();
+          // نفس السبب: فحص وجود، لا جلب صف مضمون.
+          .limit(1)
+          .maybeSingle();
           
         if (!existing) {
           await supabase.from('notifications').insert({
