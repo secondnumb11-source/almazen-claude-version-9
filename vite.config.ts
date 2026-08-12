@@ -8,8 +8,7 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 // خارج بيئة Lovable (مثل النشر على Vercel) نثبّت preset الخاص بـ Vercel
 // حتى ينتج البناء مجلد .vercel/output الجاهز للنشر مباشرة.
-const nitroPreset =
-  process.env.NITRO_PRESET || (process.env.VERCEL ? "vercel" : undefined);
+const nitroPreset = process.env.NITRO_PRESET || (process.env.VERCEL ? "vercel" : undefined);
 
 export default defineConfig({
   tanstackStart: {
