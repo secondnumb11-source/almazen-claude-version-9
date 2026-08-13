@@ -2,11 +2,20 @@ export const SAR = (n) => (Number(n) || 0).toLocaleString('ar-SA', { maximumFrac
 export const num = (n) => Number(n) || 0
 export const today = () => new Date().toISOString().slice(0, 10)
 
+/*
+  تصنيفات الوحدات. المفاتيح هنا قيمٌ في نوع ENUM اسمه unit_category في
+  قاعدة البيانات، لا نصوص حرة — فأي مفتاح لا يقابله label في النوع يُفشل
+  الحفظ بـ 22P02. (كان furnished_room معروضاً هنا وغير موجود في النوع،
+  فكان اختيار «غرفة مفروشة» يفشل؛ أُضيف إلى النوع مع التصنيفات الجديدة.)
+*/
 export const CATS = {
   apartment: 'شقة سكنية',
   furnished_unit: 'شقة مفروشة',
   furnished_room: 'غرفة مفروشة',
   hotel_room: 'غرفة فندقية',
+  residential_villa: 'فيلا سكنية',
+  furnished_villa: 'فيلا مفروشة',
+  rest_house: 'استراحة',
   chalet: 'شاليه'
 }
 export const STATUS = {

@@ -4,7 +4,7 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../AuthContext'
-import { SAR, num, today } from '../lib/helpers'
+import { SAR, num, today, CATS } from '../lib/helpers'
 import {
   fetchPaymentsRows, fetchBookingsRows, fetchTenantsRows, fetchExpensesRows,
   downloadWorkbook
@@ -374,7 +374,8 @@ function UnitPricingListTool() {
       const { data } = await supabase.from('units')
         .select('unit_number, category, daily_price, monthly_price, yearly_price, status')
         .eq('company_id', profile.company_id).order('unit_number')
-      const CATS = { apartment: 'شقة سكنية', chalet: 'شاليه', furnished_unit: 'وحدة مفروشة', hotel_room: 'غرفة فندقية' }
+      // خريطة التصنيفات مشتركة (CATS في lib/helpers) — كانت هنا نسخة محلية
+      // بأربعة تصنيفات فقط، فأي تصنيف جديد يظهر في التصدير بمفتاحه الإنجليزي.
       const ST = { available: 'متاح', reserved: 'محجوز', occupied: 'مسكون', cleaning: 'تنظيف', maintenance: 'صيانة' }
       const rows = (data || []).map(u => ({
         'الوحدة': u.unit_number, 'الفئة': CATS[u.category] || u.category, 'الحالة': ST[u.status] || u.status,
