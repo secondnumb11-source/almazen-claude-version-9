@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../AuthContext'
+import { useBranches } from '../../BranchContext'
 import { supabase } from '../../lib/supabase'
 import { AcctPage, Field, Notice, EmptyState, RefreshButton } from '../../components/accounting/AcctKit'
 import { ShieldCheck, Save, Activity, Send, ListChecks } from 'lucide-react'
@@ -18,7 +19,11 @@ import { ShieldCheck, Save, Activity, Send, ListChecks } from 'lucide-react'
  */
 export default function ShomoosPage() {
   const { profile } = useAuth()
+  const { enabled: branchesEnabled, branches } = useBranches()
   const cid = profile?.company_id
+
+  // اعتماد مستقل لكل فرع: '' = اعتماد المنشأة الافتراضي (branch_id = NULL)
+  const [branchId, setBranchId] = useState('')
 
   const [f, setF] = useState(null)
   const [ready, setReady] = useState([])
@@ -34,8 +39,17 @@ export default function ShomoosPage() {
     if (!cid) return
     setBusy(true); setErr('')
     try {
+      /*
+        شموس تسجّل كل «منشأة سياحية» برقم منشأة ورخصة سياحة مستقلَّين،
+        فالمنشأة ذات فرعين = منشأتان لدى الوزارة. لذلك صار للجدول اعتماد
+        لكل فرع، وصف branch_id = NULL هو اعتماد المنشأة الافتراضي.
+        القيد الفريد صار على (company_id, branch_id) لا على company_id
+        وحده — فيلزم تقييد كل قراءة وكتابة بالفرع، وإلا أعادت maybeSingle
+        خطأ تعدّد الصفوف أو حدّث التعديل اعتمادات الفروع كلها.
+      */
+      const scope = q0 => (branchId ? q0.eq('branch_id', branchId) : q0.is('branch_id', null))
       const [s, r, m, q] = await Promise.all([
-        supabase.from('shomoos_settings').select('*').eq('company_id', cid).maybeSingle(),
+        scope(supabase.from('shomoos_settings').select('*').eq('company_id', cid)).maybeSingle(),
         supabase.rpc('shomoos_readiness', { p_company: cid }),
         supabase.from('shomoos_field_map').select('*').order('required', { ascending: false }),
         supabase.from('shomoos_queue').select('id, event_type, status, created_at, last_error')
@@ -43,7 +57,7 @@ export default function ShomoosPage() {
       ])
       if (s.error) throw new Error(s.error.message)
       setF(s.data || {
-        company_id: cid, enabled: false, environment: 'sandbox',
+        company_id: cid, branch_id: branchId || null, enabled: false, environment: 'sandbox',
         auto_send_checkin: true, auto_send_checkout: true,
       })
       if (r.error) throw new Error(r.error.message)
@@ -51,17 +65,19 @@ export default function ShomoosPage() {
       setFields(m.data || [])
       setQueue(q.data || [])
     } catch (e) { setErr(e.message) } finally { setBusy(false) }
-  }, [cid])
+  }, [cid, branchId])
 
   useEffect(() => { load() }, [load])
 
   const save = async () => {
     setBusy(true); setErr(''); setOk('')
     try {
-      const row = { ...f, company_id: cid, updated_at: new Date().toISOString() }
+      const row = { ...f, company_id: cid, branch_id: branchId || null, updated_at: new Date().toISOString() }
       delete row.created_at
+      delete row.id
       if (typeof row.api_key === 'string' && row.api_key.startsWith('•')) delete row.api_key
-      const { error } = await supabase.from('shomoos_settings').upsert(row, { onConflict: 'company_id' })
+      // القيد الفريد صار (company_id, branch_id) بـ NULLS NOT DISTINCT
+      const { error } = await supabase.from('shomoos_settings').upsert(row, { onConflict: 'company_id,branch_id' })
       if (error) throw new Error(error.message)
       setOk('حُفظت إعدادات الربط')
       await load()
@@ -76,7 +92,7 @@ export default function ShomoosPage() {
       await supabase.from('shomoos_settings').update({
         last_status: res.ok ? 'reachable' : `http_${res.status}`,
         last_checked_at: new Date().toISOString(),
-      }).eq('company_id', cid)
+      }).eq('company_id', cid).is('branch_id', branchId || null)
       setOk(res.ok
         ? 'الخادم يستجيب. التسجيل الفعلي يحتاج المواصفة الرسمية للمسارات والحقول من مزوّد الخدمة.'
         : `الخادم رد بالرمز ${res.status}`)
@@ -86,7 +102,7 @@ export default function ShomoosPage() {
         + 'خدمات شموس تُستدعى عادةً من الخادم لا من المتصفح، وهذا متوقّع قبل تسليم المواصفة.')
       await supabase.from('shomoos_settings').update({
         last_status: 'unreachable', last_checked_at: new Date().toISOString(),
-      }).eq('company_id', cid)
+      }).eq('company_id', cid).is('branch_id', branchId || null)
     } finally { setBusy(false) }
   }
 
@@ -105,6 +121,17 @@ export default function ShomoosPage() {
       subtitle="تسجيل بيانات النزلاء لدى وزارة الداخلية — الإعدادات والجاهزية وطابور الإرسال"
       tools={
         <>
+          {branchesEnabled && branches?.length > 0 && (
+            <select
+              className="acct-input sm"
+              value={branchId}
+              onChange={e => setBranchId(e.target.value)}
+              title="لكل فرع رقم منشأة ورخصة سياحة مستقلّان لدى شموس"
+            >
+              <option value="">اعتماد المنشأة (افتراضي)</option>
+              {branches.map(b => <option key={b.id} value={b.id}>فرع: {b.name}</option>)}
+            </select>
+          )}
           <RefreshButton onClick={load} busy={busy} />
           <button className="btn btn-ghost btn-sm" onClick={testConnection} disabled={busy}>
             <Activity size={14} /> اختبار الوصول
