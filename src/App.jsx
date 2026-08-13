@@ -57,6 +57,8 @@ import { drainChannexQueue } from './lib/channexSync'
 
 /** مفاتيح صفحات النظام المحاسبي — تُستخدم لبوابة صلاحية واحدة بدل شرط لكل صفحة. */
 const ACCT_PAGES = new Set([
+  // 'je-report' دُمج في 'je-list' وأُزيل من القائمة، ويبقى مصرَّحاً به هنا
+  // كي يعمل التحويل أعلاه بدل أن يحجبه فحص الصلاحية قبل أن يصل إليه.
   'je-new', 'je-list', 'je-report', 'gl', 'coa', 'cost-centers', 'tb', 'tb-check',
   'vat', 'deferred-rev', 'deferred-exp', 'acct-settings', 'reports-hub', 'tests-hub', 'odoo',
   'digital-docs', 'shomoos',
@@ -121,6 +123,9 @@ function Shell() {
    */
   const openRecord = useCallback((targetPage, record) => {
     if (!targetPage) return
+    // `je-report` دُمج في `je-list`؛ يُحوَّل بدل أن يقع على صفحة فارغة
+    // إن بقي في رابط محفوظ أو حالة قديمة في المتصفح.
+    if (targetPage === 'je-report') targetPage = 'je-list'
     if (record?.id && (targetPage === 'je-list' || targetPage === 'je-new')) {
       setOpenEntryId(record.id)
       setPage('je-list')
@@ -512,8 +517,7 @@ function Shell() {
           {acctPage(page) && canAcct && (
             <>
               {page === 'je-new' && <JournalListPage initialEntryId={null} />}
-              {page === 'je-list' && <JournalListPage key={openEntryId || 'list'} initialEntryId={openEntryId} />}
-              {page === 'je-report' && <JournalListPage mode="report" />}
+              {(page === 'je-list' || page === 'je-report') && <JournalListPage key={openEntryId || 'list'} initialEntryId={openEntryId} />}
               {page === 'gl' && <GeneralLedgerPage onOpenEntry={(id) => { setOpenEntryId(id); setPage('je-list') }} />}
               {page === 'coa' && <ChartOfAccountsPage focusRecord={focusRecord} />}
               {page === 'cost-centers' && <CostCentersPage focusRecord={focusRecord} />}
