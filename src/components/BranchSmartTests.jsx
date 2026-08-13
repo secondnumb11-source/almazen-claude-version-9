@@ -42,12 +42,16 @@ export default function BranchSmartTests() {
 
     try {
       // 1) قراءة الفروع
+      // هذه اللوحة لا تُتاح إلا لسوبر أدمن، وسياسة branches تنص على
+      // (company_id = get_my_company_id() OR is_super_admin()) — فرؤيته لفروع
+      // كل المنشآت مقصودة بالتصميم. عدّ «الصفوف خارج المنشأة» هنا يُنتج
+      // فشلاً دائماً للدور الوحيد المسموح له بالتشغيل، وهو إنذار كاذب.
       try {
         const { data, error } = await supabase.from('branches').select('id, name, company_id')
         if (error) throw error
         const foreign = (data || []).filter(b => companyId && b.company_id !== companyId)
-        push('قراءة الفروع ضمن نطاق المنشأة', foreign.length === 0,
-          `مقروء: ${data?.length ?? 0} فرع، خارج المنشأة: ${foreign.length}`)
+        push('قراءة الفروع ضمن نطاق المنشأة', 'na',
+          `مقروء: ${data?.length ?? 0} فرع (منها ${foreign.length} خارج منشأتك). لا يُقاس من جلسة سوبر أدمن: السياسة تمنحه رؤية كل المنشآت عمداً — اعتمد «اختبار عزل الحسابات» بحساب عادي.`)
       } catch (e) { push('قراءة الفروع ضمن نطاق المنشأة', false, e.message) }
 
       // 2) دورة كتابة كاملة (إنشاء ثم حذف)
@@ -157,7 +161,9 @@ export default function BranchSmartTests() {
     } finally { setFixing(false) }
   }
 
-  const passed = results.filter(r => r.ok).length
+  const passed = results.filter(r => r.ok === true).length
+  const naCount = results.filter(r => r.ok === 'na').length
+  const scored = results.length - naCount
 
   return (
     <div className="panel" style={{ padding: 18 }}>
@@ -171,7 +177,9 @@ export default function BranchSmartTests() {
           {fixing ? '⏳ جارٍ الإصلاح…' : '🛠️ تطبيق الإصلاحات الشاملة'}
         </button>
         {results.length > 0 && (
-          <span style={{ fontSize: 13 }}>النتيجة: <b>{passed}/{results.length}</b> ناجح</span>
+          <span style={{ fontSize: 13 }}>
+            النتيجة: <b>{passed}/{scored}</b> ناجح{naCount > 0 && <> · <b>{naCount}</b> غير قابل للقياس</>}
+          </span>
         )}
       </div>
 
@@ -191,10 +199,10 @@ export default function BranchSmartTests() {
       {results.map((r, i) => (
         <div key={i} style={{
           display: 'flex', gap: 10, alignItems: 'flex-start', padding: '8px 10px',
-          borderInlineStart: '3px solid ' + (r.ok ? '#16a34a' : '#dc2626'),
+          borderInlineStart: '3px solid ' + (r.ok === 'na' ? '#d97706' : r.ok ? '#16a34a' : '#dc2626'),
           background: 'var(--card2, rgba(127,127,127,.06))', borderRadius: 6, marginBottom: 6,
         }}>
-          <span>{r.ok ? '✅' : '❌'}</span>
+          <span>{r.ok === 'na' ? 'ℹ️' : r.ok ? '✅' : '❌'}</span>
           <div>
             <div style={{ fontWeight: 600, fontSize: 13 }}>
               {r.name} {r.expectFail && <span style={{ fontSize: 11, opacity: .7 }}>(حالة فشل متوقعة)</span>}

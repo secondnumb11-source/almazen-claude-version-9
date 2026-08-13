@@ -331,6 +331,15 @@
 .sb-search-res .ds-kind { background: rgba(198,162,75,.26); color: #F2DFA8; }
 .sb-search-item .sb-search-txt small { line-height: 1.5; }
 
+/*
+  نسخة البوابة: تُصيَّر داخل <body> فتخرج من سياق التكديس الذي يفرضه
+  `.app-sidebar > * { position: relative; z-index: 1 }` ومن `overflow: hidden`
+  على الشريط الجانبي. الإحداثيات تُحسب في DataSearch وتُمرَّر كأنماط سطرية.
+*/
+.sb-search-res.sb-search-res-fixed {
+  position: fixed; inset-inline: auto; top: auto; z-index: 2000;
+}
+
 .sb-search-res {
   position: absolute; inset-inline: 10px; top: calc(100% - 4px); z-index: 60;
   background: #12294A; border: 1px solid rgba(198,162,75,.4); border-radius: 12px;

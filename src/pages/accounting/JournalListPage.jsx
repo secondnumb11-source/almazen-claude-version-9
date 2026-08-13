@@ -12,11 +12,13 @@ const monthStart = () => { const d = new Date(); return `${d.getFullYear()}-01-0
 const today = () => new Date().toISOString().slice(0, 10)
 
 /**
- * ملخص القيود المسجلة + تقرير القيود.
+ * الملخص والتقارير للقيود المحاسبية — صفحة واحدة.
+ * كانت مدخلين في القائمة (`je-list` و`je-report`) يُصيّران هذا المكوّن نفسه
+ * بنفس البيانات والمرشّحات والجدول، ولا يختلفان إلا في نص العنوان. دُمجا.
  * النقر على رقم القيد أو الشرح يفتح القيد كاملاً بتفاصيله وسطوره،
  * قابلاً للتعديل إن كان مسودة وللعكس إن كان مُرحَّلاً.
  */
-export default function JournalListPage({ initialEntryId, mode = 'summary' }) {
+export default function JournalListPage({ initialEntryId }) {
   const { profile, company } = useAuth()
   const cid = profile?.company_id
 
@@ -68,11 +70,9 @@ export default function JournalListPage({ initialEntryId, mode = 'summary' }) {
     )
   }
 
-  const isReport = mode === 'report'
-
   return (
     <AcctPage
-      title={isReport ? 'تقرير القيود المحاسبية' : 'ملخص القيود المسجلة'}
+      title="الملخص والتقارير للقيود المحاسبية"
       icon={<ListChecks size={20} />}
       subtitle="انقر رقم القيد أو شرحه لفتحه بتفاصيله الكاملة مع التعديل والحذف والقيد العكسي"
       tools={

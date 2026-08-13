@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../AuthContext';
-import { SAR, today, uploadFile } from '../lib/helpers';
+import { SAR, today, uploadFile, openStoredDocument } from '../lib/helpers';
 import { syncExpenseToAccounting } from '../lib/accountingSync';
 import { useBranches } from '../BranchContext';
 
@@ -847,15 +847,17 @@ export default function Maintenance() {
                     <td style={{ fontSize: 13 }}>
                       <div>{t.description}</div>
                       {docUrl ? (
-                        <a
-                          href={docUrl}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          type="button"
+                          onClick={() => openStoredDocument(supabase, docUrl, {
+                            onError: message => toast(message, true),
+                            context: { area: 'maintenance', ticket_id: t.id, document_kind: 'invoice' },
+                          })}
                           className="btn btn-ghost btn-sm"
                           style={{ padding: '2px 8px', fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6, border: '1px solid var(--border)', color: 'var(--blue)' }}
                         >
                           📄 عرض مستند الفاتورة
-                        </a>
+                        </button>
                       ) : (
                         <label
                           className="btn btn-ghost btn-sm"

@@ -121,12 +121,22 @@ export const ENUMS = {
     default: 'individual',
   },
   unit_category: {
-    values: ['apartment', 'chalet', 'furnished_unit', 'hotel_room'],
+    // كانت القيم أربعاً فقط، و«فيلا» و«استراحة» تُسقَطان على chalet لغياب
+    // تصنيف يقابلهما. بعد إضافتها إلى نوع unit_category صارت لكلٍّ وجهته
+    // الصحيحة. «شاليه» يبقى شاليه، والاختبار القائم عليه لم يتغيّر.
+    values: [
+      'apartment', 'chalet', 'furnished_unit', 'furnished_room', 'hotel_room',
+      'residential_villa', 'furnished_villa', 'rest_house',
+    ],
     syn: {
       apartment: ['شقه', 'شقق', 'apartment', 'flat', 'apt', 'وحده سكنيه'],
-      chalet: ['شاليه', 'شاليهات', 'chalet', 'villa', 'فيلا', 'استراحه', 'استراحة'],
+      chalet: ['شاليه', 'شاليهات', 'chalet'],
       furnished_unit: ['مفروشه', 'وحده مفروشه', 'furnished', 'furnished unit', 'studio', 'استوديو'],
+      furnished_room: ['غرفه مفروشه', 'غرفة مفروشة', 'furnished room'],
       hotel_room: ['غرفه', 'غرفه فندقيه', 'hotel', 'room', 'hotel room', 'suite', 'جناح'],
+      residential_villa: ['فيلا', 'فلل', 'villa', 'فيلا سكنيه', 'فيلا سكنية', 'residential villa'],
+      furnished_villa: ['فيلا مفروشه', 'فيلا مفروشة', 'furnished villa'],
+      rest_house: ['استراحه', 'استراحة', 'استراحات', 'rest house', 'resthouse'],
     },
     default: 'apartment',
   },

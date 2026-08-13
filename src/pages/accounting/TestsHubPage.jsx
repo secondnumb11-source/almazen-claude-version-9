@@ -12,6 +12,15 @@ import { FlaskConical, Play, Wrench, ShieldCheck } from 'lucide-react'
   قاعدة البيانات ويُعاد الفحص بعده مباشرةً لإثبات النتيجة.
 */
 
+/*
+  دوال RPC للفحص تُعيد ثلاث حالات: pass / warn / fail.
+  عرضها كحالتين فقط كان يصبغ كل `warn` باللون الأحمر ووسم «خطأ» بينما
+  عدّاد «يحتاج إصلاح» يحسب `fail` وحده — فتظهر لوحة تقول «سليم 3 · يحتاج
+  إصلاح 0» وفيها صف أحمر. ثلاث حالات صريحة تُنهي هذا التناقض.
+*/
+const STATUS_LABEL = s => (s === 'pass' ? 'سليم' : s === 'warn' ? 'تنبيه' : 'خطأ')
+const STATUS_CLASS = s => (s === 'pass' ? 'ok' : s === 'warn' ? 'warn' : 'bad')
+
 /* حزم الاختبار القائمة في النظام — تُعرض هنا بدل تناثرها في تبويبات الصفحات */
 const AccountingIntegrityTool = lazy(() => import('../../components/AccountingIntegrityTool'))
 const UnitStatusTransitionTests = lazy(() => import('../../components/UnitStatusTransitionTests'))
@@ -150,10 +159,15 @@ const SUITES = [
       if (error) throw new Error(error.message)
       return (data || []).map(r => ({
         code: r.o_suite, title: r.o_name, status: r.o_status,
-        detail: r.o_message, fixable: false,
+        detail: r.o_message, fixable: r.o_status !== 'pass',
       }))
     },
-    fix: async () => { throw new Error('يُصلَح بإعادة جدولة المهمة من ملف CRON_SYSTEM_RUN_FIX.sql') },
+    fix: async () => {
+      const { data, error } = await supabase.rpc('ci_fix_cron_jobs')
+      if (error) throw new Error(error.message)
+      return (data || []).map(r => `${r.o_action}: ${r.o_target} — ${r.o_detail}`).join(' | ')
+        || 'لم يُنفَّذ أي تغيير'
+    },
   },
   {
     id: 'docs', label: 'المستندات المرفوعة وسلامة حفظها', icon: '📎',
@@ -167,7 +181,13 @@ const SUITES = [
         detail: r.o_message, fixable: false,
       }))
     },
-    fix: async () => { throw new Error('يُصلَح بتطبيق CUSTOMER_DOC_VAULT_FIX.sql') },
+    // لا إصلاح آلي هنا عن قصد: العلاج الوحيد للملفات المتروكة هو حذفها من
+    // التخزين، وهو إتلاف نهائي لملفات مستخدمين لا رجعة فيه. أما ظهور ملف
+    // متروك بعد 2026-08-05 فيعني مسار حفظ انكسر من جديد — يُصلَح في الشيفرة
+    // لا في البيانات. لذلك تبقى الصفوف موسومة «يحتاج تصحيحاً يدوياً».
+    fix: async () => {
+      throw new Error('لا يوجد إصلاح آلي آمن: الملفات المتروكة القديمة لا تُعالَج إلا بحذف نهائي من التخزين، وأي ملف متروك حديث سببه مسار حفظ معطوب يُصلَح في الشيفرة.')
+    },
   },
   {
     id: 'speed', label: 'سرعة النظام — قياس زمن فعلي', icon: '⏱️',
@@ -207,51 +227,6 @@ const SUITES = [
         const { data, error } = await supabase.rpc('acct_complete_defaults')
         if (error) throw new Error(error.message)
         return `أُكملت الحسابات الافتراضية: ${JSON.stringify(data)}`
-      }
-      const { data, error } = await supabase.rpc('services_link_accounts')
-      if (error) throw new Error(error.message)
-      const r = (data || [])[0]
-      return r ? `${r.o_action}: ${r.o_affected} — ${r.o_detail}` : 'لم يُنفَّذ أي تغيير'
-    },
-  },
-  {
-    id: 'speed', label: 'سرعة النظام — قياس زمن فعلي', icon: '⏱️',
-    desc: 'يقيس زمن التنفيذ الحقيقي بالمللي ثانية لأثقل استعلامات النظام على أكبر منشأة بيانات — لا عدد مسوحات ولا تقديرات. زر الإصلاح يُحدّث إحصاءات المخطِّط ويُنشئ فهارس على الجداول الكبيرة فقط، ويسري على كل المنشآت الحالية والجديدة. لا يلمس بيانات ولا سياسات.',
-    superOnly: true,
-    run: async () => {
-      const { data, error } = await supabase.rpc('ci_speed_test')
-      if (error) throw new Error(error.message)
-      return (data || []).map(r => ({
-        code: 'speed', title: r.o_name, status: r.o_status,
-        detail: `${r.o_ms} مللي (الميزانية ${r.o_budget_ms}) — ${r.o_detail}`,
-        fixable: r.o_status !== 'pass', fixKey: 'speed_optimize',
-      }))
-    },
-    fix: async () => {
-      const { data, error } = await supabase.rpc('speed_optimize')
-      if (error) throw new Error(error.message)
-      // يُعاد ما نُفِّذ فعلاً — إن كان صفراً يُقال صفراً، بلا ادعاء تسريع
-      return (data || []).map(r => `${r.o_action}: ${r.o_affected} — ${r.o_detail}`).join(' | ')
-        || 'لم يُنفَّذ أي تغيير'
-    },
-  },
-  {
-    id: 'services', label: 'ترحيل الخدمات إلى شجرة الحسابات', icon: '🧾',
-    desc: 'خدمة بلا حساب مرتبط لا تجد أين تُرحَّل حين تُستخدم في فاتورة أو قيد، فتنكسر السلسلة بصمت. يفحص كل المنشآت، وزر الإصلاح يربط الخدمات غير المرتبطة بالحساب الافتراضي لمنشأتها ويُعيد عدد ما ربطه فعلاً.',
-    superOnly: true,
-    run: async () => {
-      const { data, error } = await supabase.rpc('ci_services_checks')
-      if (error) throw new Error(error.message)
-      return (data || []).map(r => ({
-        code: r.o_suite, title: r.o_name, status: r.o_status,
-        detail: r.o_message, fixable: !!r.o_fix, fixKey: r.o_fix,
-      }))
-    },
-    fix: async (cid, code, row) => {
-      if (row?.fixKey === 'acct_complete_defaults') {
-        const { data, error } = await supabase.rpc('acct_complete_defaults')
-        if (error) throw new Error(error.message)
-        return `إكمال الحسابات الافتراضية: ${JSON.stringify(data)}`
       }
       const { data, error } = await supabase.rpc('services_link_accounts')
       if (error) throw new Error(error.message)
@@ -371,6 +346,8 @@ export default function TestsHubPage() {
   }
 
   const failCount = (rows || []).filter(r => r.status === 'fail').length
+  const warnCount = (rows || []).filter(r => r.status === 'warn').length
+  const passCount = (rows || []).filter(r => r.status === 'pass').length
   const fixableCount = (rows || []).filter(r => r.status === 'fail' && r.fixable).length
 
   return (
@@ -381,7 +358,7 @@ export default function TestsHubPage() {
       tools={rows?.length ? (
         <>
           <ExcelButton filename={`نتائج-${suite?.label}.xlsx`} sheet="نتائج الفحص"
-            rows={rows.map(r => ({ 'الرمز': r.code, 'الفحص': r.title, 'النتيجة': r.status === 'pass' ? 'سليم' : 'خطأ', 'التفصيل': r.detail || '' }))}
+            rows={rows.map(r => ({ 'الرمز': r.code, 'الفحص': r.title, 'النتيجة': STATUS_LABEL(r.status), 'التفصيل': r.detail || '' }))}
             onError={setErr} />
           <PrintButton docKind="report" targetId="tests-print" title={`${suite?.label} — ${company?.name || ''}`} />
         </>
@@ -434,7 +411,8 @@ export default function TestsHubPage() {
         <>
           <div className="acct-kpis">
             <div><span>إجمالي الفحوص</span><b>{rows.length}</b></div>
-            <div><span>سليم</span><b style={{ color: '#065F46' }}>{rows.length - failCount}</b></div>
+            <div><span>سليم</span><b style={{ color: '#065F46' }}>{passCount}</b></div>
+            <div><span>تنبيه</span><b style={{ color: '#92400E' }}>{warnCount}</b></div>
             <div className={failCount ? 'due' : ''}><span>يحتاج إصلاح</span><b>{failCount}</b></div>
           </div>
 
@@ -446,16 +424,16 @@ export default function TestsHubPage() {
                   <tr key={r.code + i}>
                     <td>{r.code}</td>
                     <td>{r.title}</td>
-                    <td><span className={'acct-badge ' + (r.status === 'pass' ? 'ok' : 'bad')}>
-                      {r.status === 'pass' ? 'سليم' : 'خطأ'}</span></td>
+                    <td><span className={'acct-badge ' + STATUS_CLASS(r.status)}>
+                      {STATUS_LABEL(r.status)}</span></td>
                     <td>{r.detail || '—'}</td>
                     <td className="no-print">
-                      {r.status === 'fail' && r.fixable && (
+                      {r.status !== 'pass' && r.fixable && (
                         <button className="btn btn-ghost btn-sm" onClick={() => fix(r)} disabled={busy}>
                           <Wrench size={12} /> إصلاح
                         </button>
                       )}
-                      {r.status === 'fail' && !r.fixable && <small>يحتاج تصحيحاً يدوياً</small>}
+                      {r.status !== 'pass' && !r.fixable && <small>يحتاج تصحيحاً يدوياً</small>}
                     </td>
                   </tr>
                 ))}

@@ -429,7 +429,9 @@ function UnitReport({ units, onClose }) {
     setData(d)
   }
 
-  const CATS_L = { apartment: 'شقة سكنية', chalet: 'شاليه', furnished_unit: 'وحدة مفروشة', hotel_room: 'غرفة فندقية' }
+  // كانت هنا نسخة محلية من خريطة التصنيفات تحمل أربعة تصنيفات فقط، فأي
+  // تصنيف جديد كان يُعرض بمفتاحه الإنجليزي. تُستعمل CATS المشتركة المستورَدة
+  // أصلاً في هذا الملف — مصدر واحد بدل نسختين تتباعدان.
   const occ = data?.occupancy
   const net = data ? num(data.totals?.revenue) - num(data.totals?.expenses) : 0
   // تحليل ذكي للمصاريف
@@ -515,7 +517,7 @@ function UnitReport({ units, onClose }) {
           <h4 className="contract-h4">بيانات الوحدة ومؤشرات الأداء</h4>
           <DocGrid items={[
             ['رقم الوحدة', data.unit.unit_number],
-            ['التصنيف', CATS_L[data.unit.category] || data.unit.category],
+            ['التصنيف', CATS[data.unit.category] || data.unit.category],
             ['نسبة الإشغال', occ.occupancy_rate + '%'],
             ['أيام الإشغال', occ.occupied_days + ' من ' + data.period.total_days],
             ['أيام الشغور', occ.vacant_days],

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../AuthContext'
-import { SAR, num, today, PAY_METHODS, uploadFile } from '../lib/helpers'
+import { SAR, num, today, PAY_METHODS, uploadFile, openStoredDocument } from '../lib/helpers'
 import CustomerDocVault, { DOC_TYPES } from './CustomerDocVault'
 import RentalContract from './RentalContract'
 import PrintableDoc, { DocGrid } from './PrintableDoc'
@@ -519,9 +519,12 @@ export default function Customer360Modal({ customer, onClose, onChanged }) {
                           <td>{PAY_METHODS[p.method] || p.method}</td>
                           <td>
                             {p.document_url ? (
-                              <a className="btn btn-ghost btn-sm" href={p.document_url} target="_blank" rel="noreferrer">
+                              <button type="button" className="btn btn-ghost btn-sm" onClick={() => openStoredDocument(supabase, p.document_url, {
+                                onError: message => toast(message, true),
+                                context: { area: 'customer_360', payment_id: p.id, document_kind: 'payment_receipt' },
+                              })}>
                                 🔍 عرض
-                              </a>
+                              </button>
                             ) : (
                               '—'
                             )}

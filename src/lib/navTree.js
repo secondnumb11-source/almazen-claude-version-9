@@ -29,8 +29,11 @@ export const NAV_GROUPS = [
     id: 'acct-journals', domain: 'acct', category: 'القيود المحاسبية', icon: '📝', accordion: true, roles: 'finance',
     items: [
       { k: 'je-new', label: 'إضافة قيد جديد', icon: '➕', roles: 'finance', keywords: 'قيد يومية إضافة جديد' },
-      { k: 'je-list', label: 'ملخص القيود المسجلة', icon: '📋', roles: 'finance', keywords: 'قيود ملخص مسجلة يومية' },
-      { k: 'je-report', label: 'تقرير القيود المحاسبية', icon: '🧾', roles: 'finance', keywords: 'تقرير قيود' },
+      // كان هنا مدخلان: «ملخص القيود المسجلة» و«تقرير القيود المحاسبية».
+      // كلاهما يُصيّر JournalListPage نفسه بنفس البيانات والمرشّحات والجدول،
+      // ولم يكن `mode` يغيّر إلا نص العنوان — فصفحتان لشيء واحد. دُمجتا،
+      // وضُمّت كلمات البحث معاً كي يصل من يبحث بكلمة «تقرير» إلى الوجهة نفسها.
+      { k: 'je-list', label: 'الملخص والتقارير للقيود المحاسبية', icon: '📋', roles: 'finance', keywords: 'قيود ملخص مسجلة يومية تقرير تقارير' },
     ],
   },
   {
