@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { supabase } from '../lib/supabase'
 import almazenLogo from '../assets/almazen-logo.png'
 import saudiTechLogo from '../assets/saudi-tech-logo.svg'
 import logoBooking from '../assets/logo-booking-wordmark.svg'
@@ -73,18 +74,66 @@ function useLuxeEffects() {
 }
 
 export default function Landing({ onLogin }) {
+  /*
+    تثبيت التطبيق (PWA).
+    كان الزر مشروطاً بـ deferredPrompt وحده، وهو حدث `beforeinstallprompt`
+    غير المدعوم في Safari على iOS إطلاقاً — فمستخدمو الآيفون والآيباد لم
+    يكن يظهر لهم أي سبيل للتثبيت. وعلى iOS يتم التثبيت يدوياً من قائمة
+    «مشاركة ← إضافة إلى الشاشة الرئيسية»، فتُعرض لهم الخطوات بدل الزر.
+    كذلك كان مستمع الحدث يُسجَّل بلا إزالة، فيتراكم عند إعادة التركيب.
+  */
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [installed, setInstalled] = useState(false);
+  const [showIosSteps, setShowIosSteps] = useState(false);
+
+  /*
+    فيديو التعريف: مصدره platform_branding.intro_video_url لا ملف في الحزمة —
+    الملف 14 ميغابايت، وإدراجه في المستودع يضخّمه إلى الأبد ويُبطئ كل بناء.
+    القراءة متاحة للزائر غير المسجَّل (سياسة pb_select بشرط true)، والتعديل
+    لسوبر أدمن وحده. وإن كانت القيمة NULL لا يُعرض القسم إطلاقاً، فلا يظهر
+    مشغّل فارغ.
+  */
+  const [introVideo, setIntroVideo] = useState(null);
   useEffect(() => {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    });
+    let cancelled = false
+    supabase.from('platform_branding')
+      .select('intro_video_url, intro_video_poster')
+      .eq('id', true)
+      .maybeSingle()
+      .then(({ data }) => { if (!cancelled && data?.intro_video_url) setIntroVideo(data) })
+    return () => { cancelled = true }
   }, []);
+
+  const isIOS = typeof navigator !== 'undefined'
+    && /iphone|ipad|ipod/i.test(navigator.userAgent || '')
+    && !/crios|fxios/i.test(navigator.userAgent || '')
+
+  useEffect(() => {
+    const isStandalone = () =>
+      window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator?.standalone === true
+    setInstalled(isStandalone())
+
+    const onPrompt = (e) => { e.preventDefault(); setDeferredPrompt(e) }
+    const onInstalled = () => { setDeferredPrompt(null); setInstalled(true); setShowIosSteps(false) }
+    window.addEventListener('beforeinstallprompt', onPrompt)
+    window.addEventListener('appinstalled', onInstalled)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onPrompt)
+      window.removeEventListener('appinstalled', onInstalled)
+    }
+  }, []);
+
+  // يظهر الزر متى كان التثبيت ممكناً فعلاً: إمّا بحدث المتصفح، أو على iOS
+  // حيث التثبيت متاح دائماً يدوياً. ويختفي إن كان التطبيق مثبَّتاً أصلاً.
+  const canInstall = !installed && (!!deferredPrompt || isIOS)
+
   const handleInstallClick = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(() => setDeferredPrompt(null));
+      return;
     }
+    if (isIOS) setShowIosSteps(true);
   };
   useLuxeEffects()
   return (
@@ -135,7 +184,12 @@ export default function Landing({ onLogin }) {
               <img src={saudiTechLogo} alt="تقنية سعودية" />
             </div>
           </div>
-          <button className="btn btn-gold btn-sm ld-login-btn" onClick={onLogin}>تسجيل الدخول</button>{deferredPrompt && <button className="btn btn-ghost btn-sm" style={{marginLeft:"10px", color:"#fff", border:"1px solid rgba(255,255,255,0.3)"}} onClick={handleInstallClick}>تحميل التطبيق 📱</button>}
+          <button className="btn btn-gold btn-sm ld-login-btn" onClick={onLogin}>تسجيل الدخول</button>
+          {canInstall && (
+            <button className="btn btn-ghost btn-sm ld-install-btn" onClick={handleInstallClick}>
+              تثبيت التطبيق 📱
+            </button>
+          )}
         </div>
         <div className="ld-hero-content">
           <span className="ld-badge">✦ منصة سعودية احترافية لإدارة الضيافة والتأجير</span>
@@ -181,6 +235,29 @@ export default function Landing({ onLogin }) {
           </div>
         </div>
       </section>
+
+      {/* ===== فيديو التعريف — لا يُعرض إن لم يكن هناك مصدر ===== */}
+      {introVideo?.intro_video_url && (
+        <section className="ld-sec ld-video-sec" id="intro-video">
+          <div className="ld-video-head">
+            <span className="ld-badge-inline">▶ شاهد المنصة</span>
+            <h2>المازن في دقائق</h2>
+            <div className="ld-rule" />
+          </div>
+          <div className="ld-video-frame">
+            <video
+              className="ld-video"
+              src={introVideo.intro_video_url}
+              poster={introVideo.intro_video_poster || undefined}
+              controls
+              playsInline
+              preload="metadata"
+            >
+              متصفحك لا يدعم تشغيل الفيديو.
+            </video>
+          </div>
+        </section>
+      )}
 
       {/* ===== نبذة ومميزات المنصة ===== */}
       <section className="ld-sec" id="about">
@@ -427,6 +504,44 @@ export default function Landing({ onLogin }) {
           <p className="ld-trial-fine">
             بعد انتهاء الـ 7 أيام يتوقف الحساب تلقائياً حتى تفعيل الاشتراك السنوي (3,000 ر.س) — بلا خصم تلقائي وبلا مفاجآت.
           </p>
+        </div>
+      </section>
+
+      {/* ===== تثبيت التطبيق على الجوّال (PWA) ===== */}
+      <section className="ld-sec ld-install-sec" id="install">
+        <div className="ld-install-card">
+          <div className="ld-install-icon" aria-hidden="true">📱</div>
+          <h2>ثبّت المازن على جوّالك</h2>
+          <p className="ld-install-lead">
+            يعمل كتطبيق مستقل بأيقونة على شاشتك الرئيسية، ويفتح بلا شريط متصفح — بلا متجر وبلا تحديثات يدوية.
+          </p>
+
+          {installed ? (
+            <div className="ld-install-done">✓ التطبيق مثبَّت على هذا الجهاز</div>
+          ) : (
+            <>
+              {(deferredPrompt || isIOS) && (
+                <button className="btn btn-gold ld-install-cta" onClick={handleInstallClick}>
+                  {isIOS && !deferredPrompt ? 'كيف أثبّته على الآيفون؟' : 'تثبيت التطبيق الآن'}
+                </button>
+              )}
+
+              {/* على iOS لا يوجد حدث تثبيت في المتصفح — الخطوات هي السبيل الوحيد */}
+              {showIosSteps && (
+                <ol className="ld-ios-steps">
+                  <li>اضغط زر <b>المشاركة</b> <span aria-hidden="true">⬆️</span> في شريط Safari بالأسفل.</li>
+                  <li>مرّر واختر <b>«إضافة إلى الشاشة الرئيسية»</b>.</li>
+                  <li>اضغط <b>«إضافة»</b> — ستظهر أيقونة المازن مع تطبيقاتك.</li>
+                </ol>
+              )}
+
+              {!deferredPrompt && !isIOS && (
+                <p className="ld-install-hint">
+                  افتح هذه الصفحة من متصفح جوّالك لتثبيت التطبيق، أو من قائمة المتصفح اختر «تثبيت التطبيق».
+                </p>
+              )}
+            </>
+          )}
         </div>
       </section>
 
