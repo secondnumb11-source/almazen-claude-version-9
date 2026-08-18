@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { SAR, PAY_METHODS } from '../lib/helpers'
 import { printElement } from '../lib/printWindow'
@@ -6,6 +6,26 @@ import { useRegisteredSerial } from '../lib/documentSerial'
 
 const PERIOD_LABEL = { daily: 'يومي', monthly: 'شهري', yearly: 'سنوي' }
 const PAY_TYPE_LABEL = { rent: 'إيجار', down_payment: 'عربون', insurance: 'تأمين', penalty: 'غرامة', other: 'أخرى' }
+
+/*
+  بنود العقد الافتراضية. تُبنى كنصوص لا كـ JSON ثابت حتى تصير قابلة
+  للتحرير قبل الطباعة: المستخدم يعدّل أو يحذف أو يضيف بنداً، والمستند
+  المطبوع يعكس ما اعتمده لا القالب. البند الرابع يحمل مبلغ التأمين
+  الفعلي للحجز، فيُمرَّر إليه عند البناء.
+*/
+const DEFAULT_TERMS = (insurance) => [
+  `يُقر الطرفان بأهليتهما النظامية للتعاقد، ويخضع هذا العقد لأنظمة المملكة العربية السعودية ولائحة نظام إيجار الصادرة عن الهيئة العامة للعقار.`,
+  `تُعدّ الوحدة المؤجرة مستلمة من المستأجر بحالة جيدة وصالحة للسكن، ويلتزم المستأجر بالمحافظة عليها وإعادتها بذات الحالة عند انتهاء العقد مع مراعاة الاستهلاك المعتاد.`,
+  `يلتزم المستأجر بسداد القيمة الإيجارية في مواعيدها المتفق عليها، ويحق للمؤجر فرض غرامة تأخير أو إنهاء العقد عند التخلف عن السداد وفق الأنظمة المرعية.`,
+  `مبلغ التأمين (${insurance}) مسترد للمستأجر عند انتهاء العقد بعد خصم ما قد يترتب عليه من أضرار أو مستحقات أو فواتير خدمات غير مسددة.`,
+  `يُستخدم العقار للغرض السكني فقط، ولا يجوز للمستأجر التنازل عنه أو تأجيره من الباطن أو تغيير نشاطه إلا بموافقة خطية من المؤجر.`,
+  `يلتزم المستأجر بسداد قيمة استهلاك الخدمات (كهرباء، ماء، إنترنت) خلال مدة إشغاله ما لم يُنص على خلاف ذلك كتابةً.`,
+  `يلتزم المستأجر بأنظمة السكن والذوق العام وعدم إحداث أي إزعاج للجيران أو مخالفة تعليمات الجهات المختصة، ويتحمل وحده مسؤولية أي مخالفة نظامية تصدر منه أو من مرافقيه.`,
+  `لا يحق للمستأجر إجراء أي تعديل أو تركيب أو هدم في الوحدة إلا بإذن كتابي مسبق من المؤجر.`,
+  `يلتزم المؤجر بإجراء الصيانة الأساسية اللازمة لبقاء الوحدة صالحة للسكن ما لم يكن العطل ناتجاً عن سوء استخدام المستأجر.`,
+  `في حال رغبة أي طرف بإنهاء العقد قبل مدته يلتزم بإشعار الطرف الآخر كتابياً وفق المدة النظامية، ويُسوّى ما بينهما من مستحقات مالية.`,
+  `يُعدّ هذا العقد المبدئي ملزماً للطرفين، ويُستكمل توثيقه رسمياً على منصة إيجار الحكومية عند الحاجة، وأي بند لم يرد فيه يُرجع فيه إلى أحكام نظام إيجار والأنظمة السعودية ذات العلاقة.`,
+]
 
 /* عقد الإيجار الإلكتروني المبدئي — مستند رسمي كامل بترويسة و QR للتحقق،
    قابل للطباعة في أي وقت (عند الحجز أو لاحقاً من ملف العميل/الوحدة) */
@@ -18,6 +38,18 @@ export default function RentalContract({ booking, customer, unit, company, emplo
     table: 'bookings', id: booking.id, existing: booking.contract_number || '',
     meta: { tenant: customer?.full_name, unit: unit?.unit_number },
   })
+  /*
+    البنود قابلة للتحرير قبل الطباعة. تُهيَّأ من القالب مرة واحدة لكل حجز
+    (useMemo على مبلغ التأمين)، وما يُطبع هو ما في الحالة لا القالب.
+  */
+  const initialTerms = useMemo(() => DEFAULT_TERMS(SAR(booking.insurance_amount)), [booking.insurance_amount])
+  const [terms, setTerms] = useState(initialTerms)
+  const [editing, setEditing] = useState(false)
+  const editTerm = (i, v) => setTerms(t => t.map((x, k) => (k === i ? v : x)))
+  const removeTerm = (i) => setTerms(t => t.filter((_, k) => k !== i))
+  const addTerm = () => setTerms(t => [...t, ''])
+  const resetTerms = () => setTerms(initialTerms)
+
   const qrValue = JSON.stringify({
     contract: contractSerial || booking.id?.slice(0, 8) || '—',
     tenant: customer?.full_name, unit: unit?.unit_number,
@@ -87,17 +119,7 @@ export default function RentalContract({ booking, customer, unit, company, emplo
 
             <h4 className="contract-h4">الشروط والأحكام والالتزامات</h4>
             <ol className="contract-terms">
-              <li>يُقر الطرفان بأهليتهما النظامية للتعاقد، ويخضع هذا العقد لأنظمة المملكة العربية السعودية ولائحة نظام إيجار الصادرة عن الهيئة العامة للعقار.</li>
-              <li>تُعدّ الوحدة المؤجرة مستلمة من المستأجر بحالة جيدة وصالحة للسكن، ويلتزم المستأجر بالمحافظة عليها وإعادتها بذات الحالة عند انتهاء العقد مع مراعاة الاستهلاك المعتاد.</li>
-              <li>يلتزم المستأجر بسداد القيمة الإيجارية في مواعيدها المتفق عليها، ويحق للمؤجر فرض غرامة تأخير أو إنهاء العقد عند التخلف عن السداد وفق الأنظمة المرعية.</li>
-              <li>مبلغ التأمين ({SAR(booking.insurance_amount)}) مسترد للمستأجر عند انتهاء العقد بعد خصم ما قد يترتب عليه من أضرار أو مستحقات أو فواتير خدمات غير مسددة.</li>
-              <li>يُستخدم العقار للغرض السكني فقط، ولا يجوز للمستأجر التنازل عنه أو تأجيره من الباطن أو تغيير نشاطه إلا بموافقة خطية من المؤجر.</li>
-              <li>يلتزم المستأجر بسداد قيمة استهلاك الخدمات (كهرباء، ماء، إنترنت) خلال مدة إشغاله ما لم يُنص على خلاف ذلك كتابةً.</li>
-              <li>يلتزم المستأجر بأنظمة السكن والذوق العام وعدم إحداث أي إزعاج للجيران أو مخالفة تعليمات الجهات المختصة، ويتحمل وحده مسؤولية أي مخالفة نظامية تصدر منه أو من مرافقيه.</li>
-              <li>لا يحق للمستأجر إجراء أي تعديل أو تركيب أو هدم في الوحدة إلا بإذن كتابي مسبق من المؤجر.</li>
-              <li>يلتزم المؤجر بإجراء الصيانة الأساسية اللازمة لبقاء الوحدة صالحة للسكن ما لم يكن العطل ناتجاً عن سوء استخدام المستأجر.</li>
-              <li>في حال رغبة أي طرف بإنهاء العقد قبل مدته يلتزم بإشعار الطرف الآخر كتابياً وفق المدة النظامية، ويُسوّى ما بينهما من مستحقات مالية.</li>
-              <li>يُعدّ هذا العقد المبدئي ملزماً للطرفين، ويُستكمل توثيقه رسمياً على منصة إيجار الحكومية عند الحاجة، وأي بند لم يرد فيه يُرجع فيه إلى أحكام نظام إيجار والأنظمة السعودية ذات العلاقة.</li>
+              {terms.map((t, i) => <li key={i}>{t}</li>)}
             </ol>
 
             <p className="contract-note">
@@ -116,9 +138,29 @@ export default function RentalContract({ booking, customer, unit, company, emplo
       <div className="modal" style={{ width: 'min(900px,100%)' }}>
         <div className="modal-h no-print"><h3>عقد الإيجار الإلكتروني</h3><button className="x" onClick={onClose}>✕</button></div>
         <div className="modal-b">
+          {editing && (
+            <div className="contract-editor no-print">
+              <div className="contract-editor-head">
+                <b>تعديل بنود العقد</b>
+                <span>يُطبع ما تعتمده هنا. التعديل يخصّ هذه النسخة ولا يغيّر القالب الافتراضي.</span>
+                <button className="btn btn-ghost btn-sm" onClick={resetTerms}>↺ استعادة البنود الافتراضية</button>
+              </div>
+              {terms.map((t, i) => (
+                <div key={i} className="contract-editor-row">
+                  <span className="n">{i + 1}</span>
+                  <textarea value={t} rows={2} onChange={e => editTerm(i, e.target.value)} />
+                  <button className="btn btn-ghost btn-sm" title="حذف البند" onClick={() => removeTerm(i)}>🗑</button>
+                </div>
+              ))}
+              <button className="btn btn-ghost btn-sm" onClick={addTerm}>＋ إضافة بند</button>
+            </div>
+          )}
           {doc}
         </div>
         <div className="modal-f no-print">
+          <button className="btn btn-ghost" onClick={() => setEditing(v => !v)}>
+            {editing ? '✓ إنهاء تعديل البنود' : '✏️ تعديل البنود قبل الطباعة'}
+          </button>
           <button className="btn btn-gold" onClick={() => printElement(doc, { title: 'عقد الإيجار الإلكتروني', docKind: 'contract', entityId: booking?.id, total: booking?.total_amount, docDate: booking?.check_in_date })}>🖨 طباعة العقد</button>
         </div>
       </div>

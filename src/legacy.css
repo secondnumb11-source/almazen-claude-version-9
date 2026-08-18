@@ -2536,3 +2536,16 @@ tr.coa-group td{font-weight:800;background:var(--soft);color:var(--blue-2)}
 .opcal-legend .sw.none{background:var(--soft);border:1px solid var(--line)}
 .opcal-legend b{margin-inline-start:auto;color:var(--ink)}
 @media(max-width:640px){.opcal-grid .d{min-height:42px;font-size:11px}}
+
+/* ===== محرّر بنود العقد قبل الطباعة =====
+   يظهر داخل النافذة فقط ولا يُطبع (no-print)، والمستند أسفله يعكس
+   التعديل فوراً فيرى المستخدم النتيجة قبل الطباعة لا بعدها. */
+.contract-editor{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px}
+.contract-editor-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.contract-editor-head b{font-size:14px}
+.contract-editor-head span{font-size:12px;color:var(--muted);flex:1;min-width:200px}
+.contract-editor-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
+.contract-editor-row .n{flex:none;width:22px;height:22px;border-radius:6px;background:var(--gold);color:#fff;
+  font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:6px}
+.contract-editor-row textarea{flex:1;font-family:inherit;font-size:13px;line-height:1.7;padding:8px 10px;
+  border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);resize:vertical}
