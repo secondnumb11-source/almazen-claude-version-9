@@ -11,6 +11,7 @@ import UnitPerformanceChart from '../components/UnitPerformanceChart'
 import KpiCardConfigModal from '../components/KpiCardConfigModal'
 import AccountingIntegrityTool from '../components/AccountingIntegrityTool'
 import { Settings2, Check, Paintbrush, Maximize2, GripHorizontal, SlidersHorizontal, Trash2, RotateCcw, PlusCircle } from 'lucide-react'
+import OperationsCalendar from '../components/OperationsCalendar'
 
 const DEFAULT_LAYOUT = [
   { id: 't_bookings', title: 'عدد الحجوزات (اليوم)', valueKey: 'bookings_today', size: '1', color: 'default', group: 'today' },
@@ -705,6 +706,11 @@ export default function Home({ onNav, dashEditMode, setDashEditMode }) {
             </div>
           </div>
         )}
+      </div>
+
+      {/* تقويم العمليات — كل الوحدات في شهر واحد */}
+      <div style={{ marginTop: 20, marginBottom: 20 }}>
+        <OperationsCalendar />
       </div>
 
       {/* Analytics Charts */}
