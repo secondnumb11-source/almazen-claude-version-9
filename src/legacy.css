@@ -2549,3 +2549,8 @@ tr.coa-group td{font-weight:800;background:var(--soft);color:var(--blue-2)}
   font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:6px}
 .contract-editor-row textarea{flex:1;font-family:inherit;font-size:13px;line-height:1.7;padding:8px 10px;
   border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);resize:vertical}
+
+/* زر المزامنة اليدوية في ترويسة بوابة المستأجر */
+.tp-sync{background:rgba(255,255,255,.14);color:inherit;border:1px solid rgba(255,255,255,.25);
+  border-radius:8px;padding:4px 10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.tp-sync:hover{background:rgba(255,255,255,.24)}
