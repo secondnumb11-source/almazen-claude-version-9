@@ -2554,3 +2554,44 @@ tr.coa-group td{font-weight:800;background:var(--soft);color:var(--blue-2)}
 .tp-sync{background:rgba(255,255,255,.14);color:inherit;border:1px solid rgba(255,255,255,.25);
   border-radius:8px;padding:4px 10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .tp-sync:hover{background:rgba(255,255,255,.24)}
+
+/* ===== صفحة التحقق العامة من المستند (وجهة رمز QR) ===== */
+.dv-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:linear-gradient(160deg,#0b1729,#132844)}
+.dv-card{width:min(520px,100%);background:#fff;border-radius:20px;padding:32px 26px;text-align:center;
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.5)}
+.dv-logo{width:72px;height:72px;object-fit:contain;margin-bottom:8px}
+.dv-card h1{font-size:22px;margin:0 0 18px;color:#0E2340}
+.dv-muted{color:#64748B;font-size:14px}
+.dv-good,.dv-bad{border-radius:14px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:18px}
+.dv-good{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46}
+.dv-bad{background:#FEF2F2;border:1px solid #FECACA;color:#991B1B}
+.dv-ico{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:24px;font-weight:800;color:#fff}
+.dv-good .dv-ico{background:#16A34A}
+.dv-bad .dv-ico{background:#DC2626}
+.dv-rows{text-align:start;margin:0}
+.dv-rows>div{display:flex;justify-content:space-between;gap:12px;padding:9px 2px;border-bottom:1px solid #EDF1F7}
+.dv-rows dt{color:#64748B;font-size:13px}
+.dv-rows dd{margin:0;font-weight:700;font-size:13.5px;color:#0E2340}
+.dv-note{margin-top:16px;font-size:12px;line-height:1.9;color:#64748B}
+
+/* ===== صفحة التحقق العامة من مستند (وجهة رمز QR) ===== */
+.dv-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:linear-gradient(160deg,#0b1729,#12294a)}
+.dv-card{width:min(560px,100%);background:#fff;border-radius:20px;padding:32px 26px;text-align:center;
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.5)}
+.dv-logo{width:72px;height:72px;object-fit:contain;margin-bottom:8px}
+.dv-card h1{font-size:22px;margin:0 0 18px}
+.dv-muted{color:#64748B;font-size:13px}
+.dv-result{border-radius:14px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:18px}
+.dv-result b{font-size:16px}
+.dv-result span{font-size:13px;line-height:1.7}
+.dv-ico{font-size:34px;line-height:1}
+.dv-ok{background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0}
+.dv-bad{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}
+.dv-grid{display:grid;gap:1px;background:#E2E8F0;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;text-align:start;margin:0}
+.dv-grid>div{background:#fff;padding:10px 14px;display:flex;justify-content:space-between;gap:12px}
+.dv-grid dt{font-size:12.5px;color:#64748B;margin:0}
+.dv-grid dd{font-size:13.5px;font-weight:700;color:#0E2340;margin:0}
+.dv-note{margin-top:16px;font-size:12px;color:#64748B;line-height:1.7}

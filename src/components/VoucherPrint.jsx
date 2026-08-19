@@ -2,7 +2,7 @@ import React from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { SAR, PAY_METHODS } from '../lib/helpers'
 import { printElement } from '../lib/printWindow'
-import { useDocumentSerial } from '../lib/documentSerial'
+import { useDocumentSerial, useVerifyUrl } from '../lib/documentSerial'
 
 const PARTY_LABEL = { tenant: 'مستأجر', vendor: 'مورد', employee: 'موظف', other: 'أخرى' }
 
@@ -18,10 +18,12 @@ export default function VoucherPrintModal({ voucher: v, company, onClose }) {
   })
   const serial = v.voucher_number || issued || '—'
 
-  const qrValue = JSON.stringify({
-    voucher: serial, type: v.voucher_type, date: v.voucher_date,
-    party: v.party_name, amount: v.amount
-  })
+  /*
+    رمز QR يفتح صفحة التحقق العامة. كان يُرمّز JSON يحوي اسم الطرف
+    والمبلغ نصاً صريحاً — فمن يلتقط صورة السند يقرأهما بمسح الرمز.
+    رابط التحقق يُثبت صحّة السند دون كشف أي بيانات شخصية.
+  */
+  const qrValue = useVerifyUrl(serial, `سند رقم ${serial || '—'}`)
 
 
   const title = v.voucher_type === 'receipt' ? 'سند قبض' : 'سند صرف'

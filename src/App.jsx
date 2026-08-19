@@ -39,6 +39,7 @@ import TenantPortal from './pages/TenantPortal'
 import ResetPassword from './pages/ResetPassword'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import DocVerify from './pages/DocVerify'
 import AppSidebar from './components/AppSidebar'
 import DrawerWidget from './components/DrawerWidget'
 import RlsHealthBanner from './components/RlsHealthBanner'
@@ -605,6 +606,9 @@ export default function App() {
   if (path === '/reset-password') return <ResetPassword />
   if (path === '/privacy') return <Privacy />
   if (path === '/terms') return <Terms />
+  // صفحة التحقق العامة من مستند — وجهة رمز QR المطبوع. عامة بلا تسجيل دخول.
+  const docMatch = path.match(/^\/doc\/([^/?#]+)/)
+  if (docMatch) return <DocVerify code={decodeURIComponent(docMatch[1])} />
   const pubMatch = path.match(/^\/u\/([^/?#]+)/)
   if (pubMatch) return <PublicUnit slug={pubMatch[1]} />
   const portalMatch = path.match(/^\/portal\/([^/?#]+)/)

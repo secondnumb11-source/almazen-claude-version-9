@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { SAR, PAY_METHODS } from '../lib/helpers'
 import { printElement } from '../lib/printWindow'
-import { useRegisteredSerial } from '../lib/documentSerial'
+import { useRegisteredSerial, useVerifyUrl } from '../lib/documentSerial'
 
 const PERIOD_LABEL = { daily: 'يومي', monthly: 'شهري', yearly: 'سنوي' }
 const PAY_TYPE_LABEL = { rent: 'إيجار', down_payment: 'عربون', insurance: 'تأمين', penalty: 'غرامة', other: 'أخرى' }
@@ -50,11 +50,12 @@ export default function RentalContract({ booking, customer, unit, company, emplo
   const addTerm = () => setTerms(t => [...t, ''])
   const resetTerms = () => setTerms(initialTerms)
 
-  const qrValue = JSON.stringify({
-    contract: contractSerial || booking.id?.slice(0, 8) || '—',
-    tenant: customer?.full_name, unit: unit?.unit_number,
-    from: booking.check_in_date, to: booking.check_out_date, total
-  })
+  /*
+    رمز QR يفتح صفحة التحقق العامة من المستند بدل ترميز JSON خام كان
+    من يمسحه بجواله يرى نصاً لا مستنداً. وإن تعذّر جلب رمز التحقق يعود
+    إلى رقم العقد نصاً فلا يبقى المطبوع بلا رمز.
+  */
+  const qrValue = useVerifyUrl(contractSerial, `عقد رقم ${contractSerial || booking.id?.slice(0, 8) || '—'}`)
 
   const doc = (
           <div className="contract-doc">
