@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase, staffEmailCandidates } from '../lib/supabase'
+import { validateIdOrCr, validateSaudiPhone } from '../lib/saudiValidation'
 import { useAuth } from '../AuthContext'
 import { translateAuthError, authErrorDetails } from '../lib/authErrors'
 import { invokeAuthEmail } from '../lib/authEmail'
@@ -33,7 +34,7 @@ export default function Login({ onBack }) {
 
   // نموذج التسجيل الجديد
   const [trial, setTrial] = useState({
-    fullName: '', companyName: '', idOrCr: '', phone: '', email: '', pass: '',
+    fullName: '', companyName: '', idKind: 'national_id', idOrCr: '', phone: '', email: '', pass: '',
   })
   const [trialDone, setTrialDone] = useState(false)
   const [agreed, setAgreed] = useState(false)
@@ -117,9 +118,18 @@ export default function Login({ onBack }) {
     if (!agreed) return showError({ message: 'يجب الاطلاع والموافقة على شروط الاستخدام وسياسة الخصوصية قبل إنشاء الحساب.' })
     if (pass.length < 8) return showError({ message: 'كلمة المرور يجب ألا تقل عن 8 أحرف.' })
 
-    const phoneDigits = phone.replace(/\D+/g, '')
-    const normalized = phoneDigits.startsWith('966') ? phoneDigits : phoneDigits.startsWith('0') ? '966' + phoneDigits.slice(1) : '966' + phoneDigits
-    if (!/^9665\d{8}$/.test(normalized)) return showError({ message: 'رقم الجوال يجب أن يكون سعودياً بصيغة 05XXXXXXXX' })
+    /*
+      تحقّق محلي حقيقي بلا طرف ثالث. كان الحقل يقبل أي نص: التلميح يقول
+      «10 أرقام» ولا شيء يفرضها. الآن يُفحص حسب نوعه المُعلن — الهوية
+      والإقامة ببصمة تحقّق حسابية، والسجل التجاري بالصيغة (لا بصمة
+      منشورة له علناً فلا تُخترع واحدة).
+    */
+    const idCheck = validateIdOrCr(trial.idKind, idOrCr)
+    if (!idCheck.ok) return showError({ message: idCheck.reason })
+
+    const phoneCheck = validateSaudiPhone(phone)
+    if (!phoneCheck.ok) return showError({ message: phoneCheck.reason })
+    const normalized = phoneCheck.value
 
     clearFeedback(); setBusy(true)
     // التحقق النهائي من كود الترشيح قبل إنشاء الحساب (إن وُجد)
@@ -335,8 +345,34 @@ export default function Login({ onBack }) {
                     <input value={trial.fullName} onChange={e => setTrial({ ...trial, fullName: e.target.value })} placeholder="الاسم الكامل" /></div>
                   <div className="fld"><label>اسم الشركة أو المؤسسة *</label>
                     <input value={trial.companyName} onChange={e => setTrial({ ...trial, companyName: e.target.value })} placeholder="مؤسسة المازن للضيافة" /></div>
-                  <div className="fld"><label>السجل التجاري أو الهوية الوطنية *</label>
-                    <input value={trial.idOrCr} onChange={e => setTrial({ ...trial, idOrCr: e.target.value })} dir="ltr" placeholder="10 أرقام" /></div>
+                  <div className="fld">
+                    <label>الهوية الوطنية / الإقامة أو السجل التجاري *</label>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <select
+                        value={trial.idKind}
+                        onChange={e => setTrial({ ...trial, idKind: e.target.value })}
+                        style={{ flex: '0 0 auto' }}
+                      >
+                        <option value="national_id">هوية / إقامة</option>
+                        <option value="cr">سجل تجاري</option>
+                      </select>
+                      <input
+                        value={trial.idOrCr}
+                        onChange={e => setTrial({ ...trial, idOrCr: e.target.value })}
+                        dir="ltr" inputMode="numeric" maxLength={14}
+                        placeholder={trial.idKind === 'cr' ? '10 أرقام' : 'يبدأ بـ 1 أو 2 — 10 أرقام'}
+                        style={{ flex: 1 }}
+                      />
+                    </div>
+                    {trial.idOrCr.trim() !== '' && (() => {
+                      const r = validateIdOrCr(trial.idKind, trial.idOrCr)
+                      return (
+                        <small style={{ color: r.ok ? '#15803D' : '#B91C1C', fontSize: 12 }}>
+                          {r.ok ? '✓ رقم صالح' : r.reason}
+                        </small>
+                      )
+                    })()}
+                  </div>
                   <div className="fld"><label>رقم الجوال (السعودية) *</label>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <span className="phone-code">+966</span>
