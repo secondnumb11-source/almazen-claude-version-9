@@ -81,3 +81,30 @@ export function useRegisteredSerial(kind, { table = null, id = null, existing = 
   }, [kind, table, id, existing, metaKey])
   return existing || issued || ''
 }
+
+/**
+ * رابط التحقق من المستند — هو ما يُرمّزه رمز QR على المطبوعات.
+ *
+ * كانت رموز QR تُرمّز JSON خاماً، فمن يمسحها بجواله يرى نصاً لا مستنداً.
+ * الآن تُرمّز رابطاً عاماً يفتح صفحة تحقّق تُظهر: صحّة المستند، ورقمه،
+ * والجهة المُصدِرة، وتاريخه — وتكشف الإلغاء والتحريف عبر doc_verify.
+ *
+ * إن تعذّر جلب رمز التحقق (مستند غير مسجَّل بعد، أو انقطاع) يعود الخطّاف
+ * إلى ترميز رقم المستند نصاً — فلا يبقى المطبوع بلا رمز إطلاقاً.
+ */
+export function useVerifyUrl(serial, fallbackText = '') {
+  const [url, setUrl] = useState('')
+  useEffect(() => {
+    let alive = true
+    if (!serial) { setUrl(''); return }
+    supabase.rpc('doc_verify_code', { p_serial: String(serial) })
+      .then(({ data }) => {
+        if (!alive || !data) return
+        const origin = typeof window !== 'undefined' ? window.location.origin : ''
+        setUrl(`${origin}/doc/${data}`)
+      })
+      .catch(() => { /* الطباعة لا تفشل بسبب رمز التحقق */ })
+    return () => { alive = false }
+  }, [serial])
+  return url || fallbackText || serial || ''
+}

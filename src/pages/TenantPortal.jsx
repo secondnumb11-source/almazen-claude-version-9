@@ -23,13 +23,47 @@ export default function TenantPortal({ token }) {
 
   const notify = (msg) => { setToastMsg(msg); setTimeout(() => setToastMsg(null), 4000) }
 
-  const load = useCallback(async () => {
+  const [syncedAt, setSyncedAt] = useState(null)
+
+  /*
+    التحميل يقرأ كل شيء حيّاً من قاعدة البيانات عبر portal_get_context:
+    الترويسة (اسم المنشأة وشعارها وهاتفها وعنوانها) وبيانات العميل والعقد.
+    لكنه كان يُنفَّذ مرة واحدة عند فتح الصفحة فقط. كتابات المستأجر نفسه
+    تستدعي reload، أما تعديلات المدير — تغيير شعار المنشأة أو اسمها من
+    الإعدادات، أو تصحيح بيانات العميل، أو تعديل العقد — فلم تكن تصل إلى
+    بوابة مفتوحة إطلاقاً حتى يُعيد المستأجر تحميل الصفحة يدوياً.
+    silent = true تُبقي المحتوى معروضاً أثناء التحديث فلا ترتدّ الصفحة.
+  */
+  const load = useCallback(async (silent = false) => {
     const { data, error } = await supabase.rpc('portal_get_context', { p_token: token })
-    if (error || !data) { setStatus('invalid'); return }
-    setCtx(data); setStatus('ready')
+    if (error || !data) {
+      // فشل تحديث صامت (انقطاع شبكة مثلاً) لا يُبطل جلسة قائمة
+      if (!silent) setStatus('invalid')
+      return
+    }
+    setCtx(data); setStatus('ready'); setSyncedAt(new Date())
   }, [token])
 
   useEffect(() => { load() }, [load])
+
+  /*
+    مزامنة حيّة بلا اشتراك Realtime: تحديث عند عودة التبويب للواجهة،
+    وكل دقيقة ما دامت الصفحة ظاهرة. تتوقّف تماماً حين يُخفى التبويب،
+    فلا استهلاك شبكة أو استدعاءات في الخلفية.
+  */
+  useEffect(() => {
+    if (status !== 'ready') return
+    const refresh = () => { if (document.visibilityState === 'visible') load(true) }
+    const onVisible = () => { if (document.visibilityState === 'visible') load(true) }
+    const timer = setInterval(refresh, 60000)
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onVisible)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onVisible)
+    }
+  }, [status, load])
 
   if (status === 'loading') return <div className="tp-loading">بوابة المازن — جارٍ التحقق من الرابط…</div>
   if (status === 'invalid') return (
@@ -69,6 +103,11 @@ export default function TenantPortal({ token }) {
         <div className="tp-head-user">
           <b>{ctx.customer?.full_name}</b>
           {ctx.customer?.is_vip && <span className="chip chip-gold">VIP</span>}
+          <button
+            className="tp-sync"
+            onClick={() => load(true)}
+            title={syncedAt ? `آخر مزامنة: ${syncedAt.toLocaleTimeString('ar-SA')}` : 'تحديث البيانات'}
+          >↻ تحديث</button>
         </div>
       </header>
 

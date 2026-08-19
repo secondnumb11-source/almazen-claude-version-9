@@ -837,6 +837,7 @@ export default function Customer360Modal({ customer, onClose, onChanged }) {
           customer={customer}
           unit={selectedContractBk.units}
           booking={selectedContractBk}
+          employeeName={selectedContractBk.profiles?.full_name}
         />
       )}
 

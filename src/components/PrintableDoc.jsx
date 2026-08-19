@@ -1,7 +1,7 @@
 import React from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { printElement } from '../lib/printWindow'
-import { useDocumentSerial } from '../lib/documentSerial'
+import { useDocumentSerial, useVerifyUrl } from '../lib/documentSerial'
 
 
 /* مستند مطبوع عام — ترويسة المنشأة + عنوان + QR للتحقق + زر طباعة.
@@ -16,7 +16,13 @@ export default function PrintableDoc({ company, title, subtitle, qrValue, docNum
     enabled: !docNumber,
   })
   const serial = docNumber || issued
-  const qr = qrValue || JSON.stringify({ doc: serial || title, company: company?.name })
+  /*
+    رمز QR يفتح صفحة التحقق العامة من المستند. القيمة المُمرَّرة من
+    الأعلى (qrValue) تبقى لها الأولوية لمن يحتاج ترميزاً خاصاً، وإلا
+    فرابط التحقق، وإلا فرقم المستند نصاً — فلا يبقى مطبوع بلا رمز.
+  */
+  const verifyUrl = useVerifyUrl(serial, `مستند رقم ${serial || title || '—'}`)
+  const qr = qrValue || verifyUrl
 
 
   const doc = (
